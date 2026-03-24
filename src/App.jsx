@@ -336,59 +336,105 @@ const TOWN_OFFICE_ENTRY = { x: 37, y: 6 };
 const OFFICE_EXIT_TILE = { x: 12, y: 15 };
 
 function drawGrassTile(ctx, x, y, dark = false) {
-  const base = dark ? "#22695b" : "#68b640";
-  const shade = dark ? "#1a564a" : "#4f972f";
-  const light = dark ? "#2f8d78" : "#8cdc56";
+  const base = dark ? "#1e5e4e" : "#52a226";
+  const shade = dark ? "#134438" : "#347019";
+  const light = dark ? "#27856c" : "#78cf3c";
+  const lighter = dark ? "#31a485" : "#96e04e";
   rect(ctx, x, y, TILE, TILE, base);
   const h = hash(x, y);
-  rect(ctx, x, y, TILE, 2, light);
-  rect(ctx, x + (h % 5), y + 4, 1, 4, shade);
-  rect(ctx, x + 5 + ((h >> 2) % 4), y + 7, 1, 3, shade);
-  rect(ctx, x + 2 + ((h >> 3) % 3), y + 10, 2, 1, light);
-  rect(ctx, x + 10, y + 5 + ((h >> 4) % 3), 1, 4, light);
+  rect(ctx, x, y, TILE, 2, lighter);
+  rect(ctx, x + (h % 5), y + 3, 1, 4, shade);
+  rect(ctx, x + (h % 5) + 1, y + 2, 1, 5, lighter);
+  rect(ctx, x + 5 + ((h >> 2) % 5), y + 6, 1, 3, shade);
+  rect(ctx, x + 6 + ((h >> 2) % 5), y + 5, 1, 4, light);
+  rect(ctx, x + 1 + ((h >> 4) % 4), y + 10, 1, 3, shade);
+  rect(ctx, x + 2 + ((h >> 4) % 4), y + 9, 1, 4, lighter);
+  rect(ctx, x + 10 + ((h >> 6) % 4), y + 4, 1, 4, shade);
+  rect(ctx, x + 11 + ((h >> 6) % 4), y + 3, 1, 5, light);
+  if (((h >> 8) & 0xf) < 3) rect(ctx, x + 6 + ((h >> 12) % 4), y + 7, 2, 1, lighter);
+  rect(ctx, x, y + 14, TILE, 2, shade);
 }
 
 function drawAutumnTile(ctx, x, y) {
-  rect(ctx, x, y, TILE, TILE, "#d86a48");
-  rect(ctx, x, y, TILE, 2, "#f29c52");
-  rect(ctx, x + 2, y + 6, 1, 3, "#b14b35");
-  rect(ctx, x + 10, y + 9, 1, 3, "#f3c15d");
-  rect(ctx, x + 5, y + 11, 2, 1, "#f7da77");
+  rect(ctx, x, y, TILE, TILE, "#cc5e38");
+  rect(ctx, x, y, TILE, 2, "#f0914c");
+  const h = hash(x, y);
+  rect(ctx, x + 2, y + 5, 1, 4, "#a83a28");
+  rect(ctx, x + 3, y + 4, 1, 5, "#f28840");
+  rect(ctx, x + 9 + (h & 3), y + 8, 1, 4, "#f3be5a");
+  rect(ctx, x + 4 + ((h >> 2) & 3), y + 11, 2, 1, "#f7d770");
+  rect(ctx, x + 11, y + 4, 1, 4, "#a83a28");
+  rect(ctx, x, y + 14, TILE, 2, "#8a3424");
 }
 
 function drawPathTile(ctx, x, y) {
-  rect(ctx, x, y, TILE, TILE, "#cde3df");
-  rect(ctx, x, y, TILE, 2, "#e8f6f3");
-  rect(ctx, x + 3, y + 3, 4, 1, "#b3cbc6");
-  rect(ctx, x + 9, y + 9, 4, 1, "#b3cbc6");
-  rect(ctx, x + 6, y + 12, 3, 1, "#d7edeb");
+  rect(ctx, x, y, TILE, TILE, "#8eaaa5");
+  rect(ctx, x, y, TILE, 1, "#c8ddd9");
+  // Top row: two stones
+  rect(ctx, x + 1, y + 1, 6, 6, "#b0c8c4");
+  rect(ctx, x + 1, y + 1, 6, 2, "#ccdfdb");
+  rect(ctx, x + 6, y + 2, 1, 5, "#6e8a85");
+  rect(ctx, x + 1, y + 6, 6, 1, "#6e8a85");
+  rect(ctx, x + 9, y + 1, 6, 6, "#abc4bf");
+  rect(ctx, x + 9, y + 1, 6, 2, "#c8dfdb");
+  rect(ctx, x + 14, y + 2, 1, 5, "#6e8a85");
+  rect(ctx, x + 9, y + 6, 6, 1, "#6e8a85");
+  // Bottom row: three stones (staggered/offset)
+  rect(ctx, x, y + 9, 3, 6, "#afc9c4");
+  rect(ctx, x, y + 9, 3, 2, "#c8dfdb");
+  rect(ctx, x, y + 14, 3, 1, "#6e8a85");
+  rect(ctx, x + 4, y + 9, 7, 6, "#b0c8c4");
+  rect(ctx, x + 4, y + 9, 7, 2, "#ccdfdb");
+  rect(ctx, x + 3, y + 10, 1, 5, "#6e8a85");
+  rect(ctx, x + 10, y + 10, 1, 5, "#6e8a85");
+  rect(ctx, x + 4, y + 14, 7, 1, "#6e8a85");
+  rect(ctx, x + 12, y + 9, 4, 6, "#afc9c4");
+  rect(ctx, x + 12, y + 9, 4, 2, "#c8dfdb");
+  rect(ctx, x + 12, y + 14, 4, 1, "#6e8a85");
 }
 
 function drawDirtTile(ctx, x, y) {
-  rect(ctx, x, y, TILE, TILE, "#c89b60");
-  rect(ctx, x, y, TILE, 2, "#ddb176");
-  rect(ctx, x + 2, y + 5, 10, 1, "#b6844f");
-  rect(ctx, x + 4, y + 10, 8, 1, "#b6844f");
+  rect(ctx, x, y, TILE, TILE, "#b88948");
+  rect(ctx, x, y, TILE, 2, "#d4a660");
+  const h = hash(x, y);
+  rect(ctx, x + 2, y + 5, 10, 1, "#a07038");
+  rect(ctx, x + 4, y + 9, 8, 1, "#a07038");
+  rect(ctx, x + (h & 3) + 1, y + 12, 4, 1, "#d4a660");
+  rect(ctx, x, y + 14, TILE, 2, "#8a6030");
 }
 
 function drawTilledTile(ctx, x, y) {
-  rect(ctx, x, y, TILE, TILE, "#8a6137");
-  rect(ctx, x, y, TILE, 2, "#a87946");
-  for (let row = 3; row < 15; row += 4) rect(ctx, x + 2, y + row, 12, 1, "#6e4a2b");
+  rect(ctx, x, y, TILE, TILE, "#7e5530");
+  rect(ctx, x, y, TILE, 2, "#9e6c40");
+  for (let row = 3; row < 15; row += 4) {
+    rect(ctx, x + 2, y + row, 12, 1, "#5c3a1e");
+    rect(ctx, x + 2, y + row + 1, 12, 1, "#8a6035");
+  }
+  rect(ctx, x, y + 14, TILE, 2, "#5c3a1e");
 }
 
 function drawSandTile(ctx, x, y) {
-  rect(ctx, x, y, TILE, TILE, "#edd9a0");
-  rect(ctx, x, y, TILE, 2, "#f7e8bc");
-  rect(ctx, x + 3, y + 8, 2, 1, "#cfbb83");
-  rect(ctx, x + 11, y + 5, 2, 1, "#cfbb83");
+  rect(ctx, x, y, TILE, TILE, "#e5cc88");
+  rect(ctx, x, y, TILE, 2, "#f5e0a8");
+  const h = hash(x, y);
+  rect(ctx, x + 3, y + 6, 2, 1, "#c8a85a");
+  rect(ctx, x + 10, y + 4, 2, 1, "#c8a85a");
+  rect(ctx, x + 7 + (h & 3), y + 10, 3, 1, "#f0d898");
+  rect(ctx, x + 2 + ((h >> 2) & 3), y + 13, 2, 1, "#c8a85a");
+  rect(ctx, x, y + 14, TILE, 2, "#c8a860");
 }
 
 function drawWaterTile(ctx, x, y) {
-  rect(ctx, x, y, TILE, TILE, "#2fb7df");
-  rect(ctx, x, y, TILE, 2, "#75e5ff");
-  rect(ctx, x + 2, y + 5, 10, 1, "#75d7f4");
-  rect(ctx, x + 5, y + 10, 8, 1, "#1d91c4");
+  rect(ctx, x, y, TILE, TILE, "#18a0c8");
+  rect(ctx, x, y, TILE, 2, "#55d8f8");
+  const h = hash(x, y);
+  rect(ctx, x + 1, y + 4, 9, 1, "#4ccae8");
+  rect(ctx, x + 2, y + 5, 7, 1, "#0d7e9e");
+  rect(ctx, x + 6, y + 8, 8, 1, "#4ccae8");
+  rect(ctx, x + 7, y + 9, 6, 1, "#0d7e9e");
+  rect(ctx, x + 1 + ((h >> 3) & 3), y + 12, 6, 1, "#4ccae8");
+  if (((h >> 6) & 0x7) < 2) rect(ctx, x + 4 + ((h >> 9) & 7), y + 6 + ((h >> 12) & 3), 1, 1, "#aaf4ff");
+  rect(ctx, x, y + 14, TILE, 2, "#0b6e8c");
 }
 
 function drawOfficeFloorTile(ctx, x, y) {
@@ -440,8 +486,8 @@ function drawGround(ctx, sceneKey, worldX, worldY, screenX, screenY) {
   else if (type === "wood") drawWoodTile(ctx, screenX, screenY);
   else if (type === "wall") drawWallTile(ctx, screenX, screenY);
 
-  rect(ctx, screenX, screenY + TILE - 1, TILE, 1, "rgba(0,0,0,0.08)");
-  rect(ctx, screenX + TILE - 1, screenY, 1, TILE, "rgba(255,255,255,0.04)");
+  rect(ctx, screenX, screenY + TILE - 2, TILE, 2, "rgba(0,0,0,0.28)");
+  rect(ctx, screenX + TILE - 1, screenY, 1, TILE - 1, "rgba(255,255,255,0.14)");
 }
 
 function drawFence(ctx, x, y) {
@@ -451,12 +497,18 @@ function drawFence(ctx, x, y) {
 }
 
 function drawSign(ctx, x, y, text) {
-  rect(ctx, x + 5, y + 7, 6, 8, "#8a5e2c");
-  rect(ctx, x + 2, y + 2, 12, 7, "#c9944e");
-  outline(ctx, x + 2, y + 2, 12, 7, "#78461d");
-  ctx.fillStyle = "#5b3514";
-  ctx.font = "5px sans-serif";
-  ctx.fillText(text, x + 3, y + 7);
+  // Post
+  rect(ctx, x + 5, y + 7, 6, 8, "#6e4818");
+  rect(ctx, x + 10, y + 7, 1, 8, "#3e2a0e");
+  // Board
+  rect(ctx, x + 2, y + 2, 12, 7, "#c99040");
+  rect(ctx, x + 2, y + 2, 12, 2, "#e0b060");
+  rect(ctx, x + 13, y + 3, 1, 6, "#8a5a18");
+  rect(ctx, x + 2, y + 8, 12, 1, "#8a5a18");
+  outline(ctx, x + 2, y + 2, 12, 7, "#5c3410");
+  ctx.fillStyle = "#3a2008";
+  ctx.font = "bold 5px sans-serif";
+  ctx.fillText(text, x + 3, y + 8);
 }
 
 function drawBench(ctx, x, y) {
@@ -501,15 +553,28 @@ function drawBridge(ctx, x, y, w, h) {
 }
 
 function drawRock(ctx, x, y) {
-  rect(ctx, x + 2, y + 6, 12, 8, "#9ca3af");
-  rect(ctx, x + 4, y + 4, 8, 3, "#d1d5db");
-  rect(ctx, x + 7, y + 9, 2, 1, "#6b7280");
+  rect(ctx, x + 3, y + 15, 10, 2, "rgba(0,0,0,0.22)");
+  rect(ctx, x + 2, y + 7, 12, 7, "#8e9ba8");
+  rect(ctx, x + 4, y + 5, 8, 4, "#c8cdd6");
+  rect(ctx, x + 4, y + 5, 4, 2, "#e0e4ea");
+  rect(ctx, x + 13, y + 7, 1, 7, "#5a6470");
+  rect(ctx, x + 2, y + 13, 12, 1, "#5a6470");
+  rect(ctx, x + 7, y + 10, 2, 1, "#5a6470");
 }
 
 function drawFlower(ctx, x, y) {
-  rect(ctx, x + 7, y + 7, 2, 5, "#317f36");
-  rect(ctx, x + 5, y + 4, 3, 3, "#ffffff");
-  rect(ctx, x + 8, y + 4, 3, 3, "#f472b6");
+  // Stem + leaf
+  rect(ctx, x + 7, y + 7, 2, 7, "#2a7a2e");
+  rect(ctx, x + 6, y + 10, 2, 2, "#2a7a2e");
+  // Petals (cross shape + corners)
+  rect(ctx, x + 6, y + 2, 4, 6, "#ffffff");
+  rect(ctx, x + 5, y + 3, 6, 4, "#ffffff");
+  // Pink accent petals
+  rect(ctx, x + 8, y + 2, 2, 3, "#f472b6");
+  rect(ctx, x + 9, y + 4, 2, 2, "#f472b6");
+  rect(ctx, x + 5, y + 4, 2, 2, "#f9a8d4");
+  // Yellow center
+  rect(ctx, x + 7, y + 4, 2, 2, "#fde047");
 }
 
 function drawCropBed(ctx, x, y, crop) {
@@ -522,27 +587,44 @@ function drawCropBed(ctx, x, y, crop) {
 
 function drawTree(ctx, x, y, style) {
   const trunk = style === "palm" ? "#5a3821" : "#7a4c29";
+  const trunkShade = style === "palm" ? "#3d2614" : "#5a3318";
+  // Base shadow
+  rect(ctx, x + 3, y + 15, 10, 2, "rgba(0,0,0,0.28)");
   rect(ctx, x + 6, y + 9, 4, 7, trunk);
+  rect(ctx, x + 9, y + 9, 1, 7, trunkShade);
   if (style === "pine") {
-    rect(ctx, x + 1, y + 7, 14, 5, "#0f6a68");
-    rect(ctx, x + 2, y + 4, 12, 5, "#138079");
-    rect(ctx, x + 4, y + 1, 8, 5, "#1da093");
+    rect(ctx, x + 1, y + 7, 14, 5, "#0c6866");
+    rect(ctx, x + 14, y + 7, 1, 5, "#073e3c");
+    rect(ctx, x + 1, y + 11, 14, 1, "#073e3c");
+    rect(ctx, x + 2, y + 4, 12, 5, "#10807c");
+    rect(ctx, x + 13, y + 4, 1, 5, "#073e3c");
+    rect(ctx, x + 2, y + 8, 12, 1, "#073e3c");
+    rect(ctx, x + 4, y + 1, 8, 5, "#18a49e");
+    rect(ctx, x + 11, y + 1, 1, 5, "#073e3c");
+    rect(ctx, x + 4, y + 1, 4, 1, "#3ed4cc");
   } else if (style === "palm") {
     rect(ctx, x + 6, y + 2, 4, 8, "#6c4325");
-    rect(ctx, x + 1, y + 2, 14, 3, "#75b24a");
-    rect(ctx, x + 0, y + 5, 6, 2, "#4b8e30");
-    rect(ctx, x + 10, y + 5, 6, 2, "#4b8e30");
-    rect(ctx, x + 3, y + 0, 10, 2, "#88cc58");
+    rect(ctx, x + 9, y + 2, 1, 8, "#3d2614");
+    rect(ctx, x + 1, y + 2, 14, 3, "#72b044");
+    rect(ctx, x + 0, y + 5, 6, 2, "#477e2a");
+    rect(ctx, x + 10, y + 5, 6, 2, "#477e2a");
+    rect(ctx, x + 3, y + 0, 10, 2, "#8ed054");
+    rect(ctx, x + 3, y, 4, 1, "#b4ee78");
   } else if (style === "autumn") {
     rect(ctx, x + 1, y + 3, 14, 8, "#9d713a");
     rect(ctx, x + 3, y + 1, 10, 5, "#d9b16b");
+    rect(ctx, x + 14, y + 3, 1, 8, "#6e4c22");
+    rect(ctx, x + 1, y + 10, 14, 1, "#6e4c22");
     rect(ctx, x + 5, y + 5, 3, 2, "#8a5a2c");
+    rect(ctx, x + 5, y + 1, 5, 1, "#f0cc7a");
   } else {
-    rect(ctx, x + 1, y + 4, 14, 8, "#54ad2d");
-    rect(ctx, x + 3, y + 1, 10, 5, "#89d449");
-    rect(ctx, x + 5, y + 6, 3, 2, "#37781b");
+    rect(ctx, x + 1, y + 4, 14, 8, "#4aab24");
+    rect(ctx, x + 3, y + 1, 10, 5, "#7edc3e");
+    rect(ctx, x + 14, y + 4, 1, 8, "#286814");
+    rect(ctx, x + 1, y + 11, 14, 1, "#286814");
+    rect(ctx, x + 5, y + 6, 3, 2, "#286814");
+    rect(ctx, x + 5, y + 1, 5, 1, "#a8f050");
   }
-  rect(ctx, x + 4, y + 14, 8, 2, "rgba(0,0,0,0.18)");
 }
 
 function drawHouse(ctx, building, x, y) {
@@ -715,8 +797,22 @@ const ANIMAL_PALETTES = {
 
 function drawCritter(ctx, x, y, species, dir, step, isPlayer = false) {
   const palette = ANIMAL_PALETTES[species] || ANIMAL_PALETTES.beaver;
-  rect(ctx, x + 4, y + 14, 8, 2, "rgba(0,0,0,0.18)");
+  const dark = palette.dark;
 
+  // Ground shadow
+  rect(ctx, x + 3, y + 15, 10, 2, "rgba(0,0,0,0.28)");
+
+  // Dark outline silhouette (1px expanded around head + body + ears)
+  if (species === "rabbit") {
+    rect(ctx, x + 3, y - 2, 3, 6, dark);
+    rect(ctx, x + 10, y - 2, 3, 6, dark);
+  }
+  rect(ctx, x + 3, y + 0, 4, 4, dark);
+  rect(ctx, x + 9, y + 0, 4, 4, dark);
+  rect(ctx, x + 4, y + 2, 8, 9, dark);
+  rect(ctx, x + 3, y + 7, 10, 8, dark);
+
+  // Beaver tail
   if (species === "beaver") {
     if (dir === "up") rect(ctx, x + 5, y + 13, 6, 3, "#4a2e16");
     else if (dir === "left") rect(ctx, x + 10, y + 12, 5, 3, "#4a2e16");
@@ -724,38 +820,56 @@ function drawCritter(ctx, x, y, species, dir, step, isPlayer = false) {
     else rect(ctx, x + 5, y + 13, 6, 3, "#5a3416");
   }
 
-  rect(ctx, x + 4, y + 8, 8, 5, palette.accent);
+  // Body (shirt/accent color)
+  rect(ctx, x + 4, y + 8, 8, 6, palette.accent);
+  rect(ctx, x + 5, y + 9, 1, 4, "rgba(255,255,255,0.2)");
+
+  // Head
   rect(ctx, x + 5, y + 3, 6, 6, palette.fur);
-  rect(ctx, x + 4, y + 9, 8, 5, palette.fur);
+  // Face highlight
   rect(ctx, x + 6, y + 5, 4, 3, palette.light);
+
+  // Ears
   rect(ctx, x + 4, y + 1, 3, 3, palette.fur);
   rect(ctx, x + 9, y + 1, 3, 3, palette.fur);
+  rect(ctx, x + 5, y + 2, 1, 1, palette.light);
+  rect(ctx, x + 10, y + 2, 1, 1, palette.light);
 
   if (species === "rabbit") {
     rect(ctx, x + 4, y - 1, 2, 4, palette.light);
     rect(ctx, x + 10, y - 1, 2, 4, palette.light);
+    rect(ctx, x + 4, y - 1, 1, 3, palette.fur);
+    rect(ctx, x + 11, y - 1, 1, 3, palette.fur);
   }
 
   if (species === "owl") {
-    rect(ctx, x + 3, y + 3, 2, 2, palette.dark);
-    rect(ctx, x + 11, y + 3, 2, 2, palette.dark);
+    rect(ctx, x + 3, y + 3, 2, 2, dark);
+    rect(ctx, x + 11, y + 3, 2, 2, dark);
     rect(ctx, x + 6, y + 6, 4, 2, "#f4c542");
   }
 
+  // Eyes + nose
   if (dir === "down") {
-    rect(ctx, x + 6, y + 5, 1, 1, "#111827");
-    rect(ctx, x + 9, y + 5, 1, 1, "#111827");
-  } else if (dir === "left") rect(ctx, x + 5, y + 5, 1, 1, "#111827");
-  else if (dir === "right") rect(ctx, x + 10, y + 5, 1, 1, "#111827");
+    rect(ctx, x + 6, y + 5, 1, 1, "#0d0d0d");
+    rect(ctx, x + 9, y + 5, 1, 1, "#0d0d0d");
+    rect(ctx, x + 7, y + 7, 2, 1, "#e88080");
+  } else if (dir === "left") {
+    rect(ctx, x + 5, y + 5, 1, 1, "#0d0d0d");
+    rect(ctx, x + 6, y + 7, 2, 1, "#e88080");
+  } else if (dir === "right") {
+    rect(ctx, x + 10, y + 5, 1, 1, "#0d0d0d");
+    rect(ctx, x + 9, y + 7, 2, 1, "#e88080");
+  }
 
   if (isPlayer) rect(ctx, x + 5, y + 8, 6, 1, "#ffffff");
 
+  // Feet (walk animation)
   if (step % 2 === 0) {
-    rect(ctx, x + 4, y + 14, 2, 1, palette.dark);
-    rect(ctx, x + 10, y + 14, 2, 1, palette.dark);
+    rect(ctx, x + 4, y + 14, 2, 2, dark);
+    rect(ctx, x + 10, y + 14, 2, 2, dark);
   } else {
-    rect(ctx, x + 3, y + 14, 2, 1, palette.dark);
-    rect(ctx, x + 11, y + 14, 2, 1, palette.dark);
+    rect(ctx, x + 3, y + 14, 2, 2, dark);
+    rect(ctx, x + 11, y + 14, 2, 2, dark);
   }
 }
 
