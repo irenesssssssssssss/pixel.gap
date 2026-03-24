@@ -315,7 +315,9 @@ officeWalls.forEach((cell) => officeBlocking.add(cell));
 officeDesks.forEach((desk) => addRect(officeBlocking, desk.x, desk.y, desk.w, desk.h));
 officeCounters.forEach((counter) => addRect(officeBlocking, counter.x, counter.y, counter.w, counter.h));
 officePlants.forEach((plant) => officeBlocking.add(keyFor(plant.x, plant.y)));
-officeDecor.filter((item) => item.kind !== "window" && item.kind !== "whiteboard").forEach((item) => officeBlocking.add(keyFor(item.x, item.y)));
+officeDecor
+  .filter((item) => item.kind !== "window" && item.kind !== "whiteboard")
+  .forEach((item) => officeBlocking.add(keyFor(item.x, item.y)));
 
 function officeGroundTypeAt(x, y) {
   if (isInSet(officeWalls, x, y)) return "wall";
@@ -674,7 +676,10 @@ function drawSpeechBubble(ctx, x, y, text) {
     } else current = next;
   });
   if (current) lines.push(current);
-  const width = Math.min(maxWidth, Math.max(...lines.map((lineText) => ctx.measureText(lineText).width)) + padding * 2);
+  const width = Math.min(
+    maxWidth,
+    Math.max(...lines.map((lineText) => ctx.measureText(lineText).width)) + padding * 2
+  );
   const height = lines.length * 11 + padding * 2;
   const left = clamp(x - width / 2, 8, VIEW_COLS * TILE - width - 8);
   const top = Math.max(8, y - height - 18);
@@ -683,7 +688,9 @@ function drawSpeechBubble(ctx, x, y, text) {
   rect(ctx, x - 4, top + height - 1, 8, 6, "#fffdf8");
   outline(ctx, x - 4, top + height - 1, 8, 6, "#434343");
   ctx.fillStyle = "#2f2f2f";
-  lines.forEach((lineText, index) => ctx.fillText(lineText, left + padding, top + padding + 8 + index * 11));
+  lines.forEach((lineText, index) =>
+    ctx.fillText(lineText, left + padding, top + padding + 8 + index * 11)
+  );
 }
 
 function worldToScreen(worldX, worldY, camX, camY) {
@@ -723,21 +730,26 @@ function drawCritter(ctx, x, y, species, dir, step, isPlayer = false) {
   rect(ctx, x + 6, y + 5, 4, 3, palette.light);
   rect(ctx, x + 4, y + 1, 3, 3, palette.fur);
   rect(ctx, x + 9, y + 1, 3, 3, palette.fur);
+
   if (species === "rabbit") {
     rect(ctx, x + 4, y - 1, 2, 4, palette.light);
     rect(ctx, x + 10, y - 1, 2, 4, palette.light);
   }
+
   if (species === "owl") {
     rect(ctx, x + 3, y + 3, 2, 2, palette.dark);
     rect(ctx, x + 11, y + 3, 2, 2, palette.dark);
     rect(ctx, x + 6, y + 6, 4, 2, "#f4c542");
   }
+
   if (dir === "down") {
     rect(ctx, x + 6, y + 5, 1, 1, "#111827");
     rect(ctx, x + 9, y + 5, 1, 1, "#111827");
   } else if (dir === "left") rect(ctx, x + 5, y + 5, 1, 1, "#111827");
   else if (dir === "right") rect(ctx, x + 10, y + 5, 1, 1, "#111827");
+
   if (isPlayer) rect(ctx, x + 5, y + 8, 6, 1, "#ffffff");
+
   if (step % 2 === 0) {
     rect(ctx, x + 4, y + 14, 2, 1, palette.dark);
     rect(ctx, x + 10, y + 14, 2, 1, palette.dark);
@@ -828,24 +840,37 @@ const OFFICE_NPCS_START = [
 
 function chooseNpcMove(sceneKey, npc, occupied, player) {
   if (npc.stationary) return { ...npc, step: (npc.step || 0) ^ 1 };
+
   const dirs = [
     { key: "up", dx: 0, dy: -1 },
     { key: "down", dx: 0, dy: 1 },
     { key: "left", dx: -1, dy: 0 },
     { key: "right", dx: 1, dy: 0 },
   ];
+
   const valid = dirs.filter((dir) => {
     const nx = npc.x + dir.dx;
     const ny = npc.y + dir.dy;
     if (npc.patrol) {
-      if (nx < npc.patrol.x1 || nx > npc.patrol.x2 || ny < npc.patrol.y1 || ny > npc.patrol.y2) return false;
+      if (nx < npc.patrol.x1 || nx > npc.patrol.x2 || ny < npc.patrol.y1 || ny > npc.patrol.y2) {
+        return false;
+      }
     }
     return isWalkable(sceneKey, nx, ny, occupied) && !(player.x === nx && player.y === ny);
   });
+
   if (!valid.length) return { ...npc, step: (npc.step || 0) ^ 1 };
+
   const same = valid.find((d) => d.key === npc.dir);
   const dir = same && Math.random() < 0.55 ? same : valid[Math.floor(Math.random() * valid.length)];
-  return { ...npc, x: npc.x + dir.dx, y: npc.y + dir.dy, dir: dir.key, step: (npc.step || 0) ^ 1 };
+
+  return {
+    ...npc,
+    x: npc.x + dir.dx,
+    y: npc.y + dir.dy,
+    dir: dir.key,
+    step: (npc.step || 0) ^ 1,
+  };
 }
 
 function getTaskLabel(quest) {
@@ -879,8 +904,12 @@ export default function App() {
 
   const [scene, setScene] = useState("town");
   const [player, setPlayer] = useState({ x: 24, y: 18, dir: "down", step: 0, species: "beaver" });
-  const [townNpcs, setTownNpcs] = useState(() => TOWN_NPCS_START.map((npc, index) => ({ ...npc, step: index % 2 })));
-  const [officeNpcs, setOfficeNpcs] = useState(() => OFFICE_NPCS_START.map((npc, index) => ({ ...npc, step: index % 2 })));
+  const [townNpcs, setTownNpcs] = useState(() =>
+    TOWN_NPCS_START.map((npc, index) => ({ ...npc, step: index % 2 }))
+  );
+  const [officeNpcs, setOfficeNpcs] = useState(() =>
+    OFFICE_NPCS_START.map((npc, index) => ({ ...npc, step: index % 2 }))
+  );
   const [quest, setQuest] = useState({ stage: "goToOffice", hasFolder: false });
   const [status, setStatus] = useState("walk into the delaware office building.");
   const [dialog, setDialog] = useState(null);
@@ -890,7 +919,11 @@ export default function App() {
   officeNpcsRef.current = officeNpcs;
 
   const currentNpcs = scene === "town" ? townNpcs : officeNpcs;
-  const nearbyNpc = useMemo(() => currentNpcs.find((npc) => Math.abs(npc.x - player.x) + Math.abs(npc.y - player.y) === 1) || null, [currentNpcs, player]);
+
+  const nearbyNpc = useMemo(() => {
+    return currentNpcs.find((npc) => Math.abs(npc.x - player.x) + Math.abs(npc.y - player.y) === 1) || null;
+  }, [currentNpcs, player]);
+
   const nearbyFolder = useMemo(() => {
     if (scene !== "office" || quest.hasFolder || quest.stage !== "findFolder") return null;
     return Math.abs(officeFolder.x - player.x) + Math.abs(officeFolder.y - player.y) <= 1 ? officeFolder : null;
@@ -923,7 +956,11 @@ export default function App() {
   function exitOffice() {
     setScene("town");
     setPlayer((prev) => ({ ...prev, x: 37, y: 7, dir: "down" }));
-    setStatus(quest.stage === "complete" ? "nice work. you finished the office errand." : getTaskLabel(quest));
+    setStatus(
+      quest.stage === "complete"
+        ? "nice work. you finished the office errand."
+        : getTaskLabel(quest)
+    );
     setDialog(null);
   }
 
@@ -933,7 +970,10 @@ export default function App() {
         if (quest.stage === "meetReception") {
           const next = { ...quest, stage: "talkAnalyst" };
           setQuest(next);
-          flashDialog("willow: morning! moss lost the blue energy-audit folder. find him in analytics first.", npc);
+          flashDialog(
+            "willow: morning! moss lost the blue energy-audit folder. find him in analytics first.",
+            npc
+          );
           return;
         }
         flashDialog("willow: front desk update — the whole team is waiting on that summary.", npc);
@@ -944,17 +984,26 @@ export default function App() {
         if (quest.stage === "talkAnalyst") {
           const next = { ...quest, stage: "findFolder" };
           setQuest(next);
-          flashDialog("moss: i was halfway through the sustainability report when the blue folder vanished. check the break room by the water cooler.", npc);
+          flashDialog(
+            "moss: i was halfway through the sustainability report when the blue folder vanished. check the break room by the water cooler.",
+            npc
+          );
           return;
         }
         if (quest.stage === "findFolder" && !quest.hasFolder) {
-          flashDialog("moss: the folder should be somewhere in the break room. i last had it near the cooler.", npc);
+          flashDialog(
+            "moss: the folder should be somewhere in the break room. i last had it near the cooler.",
+            npc
+          );
           return;
         }
         if (quest.stage === "returnAnalyst" && quest.hasFolder) {
           const next = { ...quest, stage: "talkManager" };
           setQuest(next);
-          flashDialog("moss: perfect. i can finish the summary now. take the final notes to rowan in the meeting room.", npc);
+          flashDialog(
+            "moss: perfect. i can finish the summary now. take the final notes to rowan in the meeting room.",
+            npc
+          );
           return;
         }
         flashDialog("moss: once rowan has the summary, we can finally breathe.", npc);
@@ -965,7 +1014,11 @@ export default function App() {
         if (quest.stage === "talkManager") {
           const next = { ...quest, stage: "complete" };
           setQuest(next);
-          flashDialog("rowan: good work. this is the kind of small fix that stops reporting gaps from becoming real problems.", npc, 4200);
+          flashDialog(
+            "rowan: good work. this is the kind of small fix that stops reporting gaps from becoming real problems.",
+            npc,
+            4200
+          );
           return;
         }
         flashDialog("rowan: good leaders still need clear signals from the people doing the work.", npc);
@@ -973,8 +1026,11 @@ export default function App() {
       }
 
       if (npc.id === "pip") {
-        if (quest.stage === "findFolder") flashDialog("pip: i saw a blue folder near the break room counter. it looked important.", npc);
-        else flashDialog("pip: the office feels way calmer when everyone actually talks to each other.", npc);
+        if (quest.stage === "findFolder") {
+          flashDialog("pip: i saw a blue folder near the break room counter. it looked important.", npc);
+        } else {
+          flashDialog("pip: the office feels way calmer when everyone actually talks to each other.", npc);
+        }
         return;
       }
     }
@@ -992,15 +1048,19 @@ export default function App() {
         const nx = prev.x + dx;
         const ny = prev.y + dy;
         const occupied = new Set(currentNpcs.map((npc) => keyFor(npc.x, npc.y)));
+
         if (!isWalkable(scene, nx, ny, occupied)) return { ...prev, dir };
+
         const nextPlayer = { ...prev, x: nx, y: ny, dir, step: prev.step ^ 1 };
 
         if (scene === "town" && nx === TOWN_OFFICE_ENTRY.x && ny === TOWN_OFFICE_ENTRY.y) {
           window.setTimeout(() => enterOffice(), 0);
         }
+
         if (scene === "office" && nx === OFFICE_EXIT_TILE.x && ny === OFFICE_EXIT_TILE.y) {
           window.setTimeout(() => exitOffice(), 0);
         }
+
         return nextPlayer;
       });
     }
@@ -1012,19 +1072,41 @@ export default function App() {
         flashDialog("you picked up the blue energy-audit folder. bring it back to moss.", null, 2800);
         return;
       }
+
       if (nearbyNpc) {
         handleNpcInteraction(nearbyNpc);
         return;
       }
-      if (scene === "town" && Math.abs(playerRef.current.x - TOWN_OFFICE_ENTRY.x) + Math.abs(playerRef.current.y - TOWN_OFFICE_ENTRY.y) <= 1) {
+
+      if (
+        scene === "town" &&
+        Math.abs(playerRef.current.x - TOWN_OFFICE_ENTRY.x) +
+          Math.abs(playerRef.current.y - TOWN_OFFICE_ENTRY.y) <=
+          1
+      ) {
         flashDialog("the delaware office hums softly. step onto the doorway to head inside.", null, 2600);
         return;
       }
+
       setStatus(getTaskLabel(quest));
     }
 
     function onKeyDown(event) {
-      const accepted = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d", "W", "A", "S", "D", " "];
+      const accepted = [
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "w",
+        "a",
+        "s",
+        "d",
+        "W",
+        "A",
+        "S",
+        "D",
+        " ",
+      ];
       if (accepted.includes(event.key)) event.preventDefault();
       keysRef.current[event.key] = true;
       if (event.key === " ") interact();
@@ -1041,6 +1123,7 @@ export default function App() {
     const movementLoop = window.setInterval(() => {
       const now = Date.now();
       if (now - lastMove < PLAYER_MOVE_MS) return;
+
       if (keysRef.current.ArrowUp || keysRef.current.w || keysRef.current.W) {
         tryMove(0, -1, "up");
         lastMove = now;
@@ -1064,31 +1147,115 @@ export default function App() {
     };
   }, [scene, currentNpcs, nearbyNpc, nearbyFolder, quest]);
 
+  // npc movement loop
   useEffect(() => {
     const npcLoop = window.setInterval(() => {
       if (scene === "town") {
+        setTownNpcs((prev) =>
+          prev.map((npc) => {
+            const occupied = new Set(
+              prev.filter((other) => other.id !== npc.id).map((other) => keyFor(other.x, other.y))
+            );
+            return chooseNpcMove("town", npc, occupied, playerRef.current);
+          })
+        );
+      } else {
+        setOfficeNpcs((prev) =>
+          prev.map((npc) => {
+            const occupied = new Set(
+              prev.filter((other) => other.id !== npc.id).map((other) => keyFor(other.x, other.y))
+            );
+            return chooseNpcMove("office", npc, occupied, playerRef.current);
+          })
+        );
+      }
+    }, NPC_MOVE_MS);
+
+    return () => window.clearInterval(npcLoop);
+  }, [scene]);
+
+  // draw loop
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = false;
+
+    let raf = 0;
+
+    function drawScene() {
+      ctx.clearRect(0, 0, viewportWidth, viewportHeight);
+
+      const sceneData = SCENES[scene];
+      const camX = clamp(
+        playerRef.current.x - Math.floor(VIEW_COLS / 2),
+        0,
+        Math.max(0, sceneData.w - VIEW_COLS)
+      );
+      const camY = clamp(
+        playerRef.current.y - Math.floor(VIEW_ROWS / 2),
+        0,
+        Math.max(0, sceneData.h - VIEW_ROWS)
+      );
+
+      for (let y = 0; y < VIEW_ROWS; y += 1) {
+        for (let x = 0; x < VIEW_COLS; x += 1) {
+          const worldX = camX + x;
+          const worldY = camY + y;
+          if (worldX < sceneData.w && worldY < sceneData.h) {
+            drawGround(ctx, scene, worldX, worldY, x * TILE, y * TILE);
+          }
+        }
+      }
+
+      const drawables = [];
+
+      if (scene === "town") {
         townTrees.forEach((tree) => drawables.push({ type: "tree", sortY: tree.y, data: tree }));
-        townBuildings.forEach((building) => drawables.push({ type: "building", sortY: building.y + building.h, data: building }));
+        townBuildings.forEach((building) =>
+          drawables.push({ type: "building", sortY: building.y + building.h, data: building })
+        );
         townFences.forEach((fence) => drawables.push({ type: "fence", sortY: fence.y, data: fence }));
         townSigns.forEach((sign) => drawables.push({ type: "sign", sortY: sign.y, data: sign }));
         townBenches.forEach((bench) => drawables.push({ type: "bench", sortY: bench.y, data: bench }));
         townBarrels.forEach((barrel) => drawables.push({ type: "barrel", sortY: barrel.y, data: barrel }));
         townCrates.forEach((crate) => drawables.push({ type: "crate", sortY: crate.y, data: crate }));
         townLamps.forEach((lamp) => drawables.push({ type: "lamp", sortY: lamp.y, data: lamp }));
-        townCanalPosts.forEach((post) => drawables.push({ type: "canalPost", sortY: post.y, data: post }));
-        townBridges.forEach((bridge) => drawables.push({ type: "bridge", sortY: bridge.y + bridge.h, data: bridge }));
+        townCanalPosts.forEach((post) =>
+          drawables.push({ type: "canalPost", sortY: post.y, data: post })
+        );
+        townBridges.forEach((bridge) =>
+          drawables.push({ type: "bridge", sortY: bridge.y + bridge.h, data: bridge })
+        );
         townRocks.forEach((rock) => drawables.push({ type: "rock", sortY: rock.y, data: rock }));
-        townFlowers.forEach((flower) => drawables.push({ type: "flower", sortY: flower.y, data: flower }));
+        townFlowers.forEach((flower) =>
+          drawables.push({ type: "flower", sortY: flower.y, data: flower })
+        );
         townFarmBeds.forEach((bed) => drawables.push({ type: "bed", sortY: bed.y + bed.h, data: bed }));
-        townStatues.forEach((statue) => drawables.push({ type: "statue", sortY: statue.y, data: statue }));
-        townNpcsRef.current.forEach((npc) => drawables.push({ type: "npc", sortY: npc.y, data: npc }));
+        townStatues.forEach((statue) =>
+          drawables.push({ type: "statue", sortY: statue.y, data: statue })
+        );
+        townNpcsRef.current.forEach((npc) =>
+          drawables.push({ type: "npc", sortY: npc.y, data: npc })
+        );
       } else {
-        officeDesks.forEach((desk) => drawables.push({ type: "desk", sortY: desk.y + desk.h, data: desk }));
-        officeCounters.forEach((counter) => drawables.push({ type: "counter", sortY: counter.y + counter.h, data: counter }));
-        officePlants.forEach((plant) => drawables.push({ type: "plant", sortY: plant.y, data: plant }));
-        officeDecor.forEach((item) => drawables.push({ type: "decor", sortY: item.y, data: item }));
-        if (!quest.hasFolder) drawables.push({ type: "decor", sortY: officeFolder.y, data: officeFolder });
-        officeNpcsRef.current.forEach((npc) => drawables.push({ type: "npc", sortY: npc.y, data: npc }));
+        officeDesks.forEach((desk) =>
+          drawables.push({ type: "desk", sortY: desk.y + desk.h, data: desk })
+        );
+        officeCounters.forEach((counter) =>
+          drawables.push({ type: "counter", sortY: counter.y + counter.h, data: counter })
+        );
+        officePlants.forEach((plant) =>
+          drawables.push({ type: "plant", sortY: plant.y, data: plant })
+        );
+        officeDecor.forEach((item) =>
+          drawables.push({ type: "decor", sortY: item.y, data: item })
+        );
+        if (!quest.hasFolder) {
+          drawables.push({ type: "decor", sortY: officeFolder.y, data: officeFolder });
+        }
+        officeNpcsRef.current.forEach((npc) =>
+          drawables.push({ type: "npc", sortY: npc.y, data: npc })
+        );
       }
 
       drawables.push({ type: "player", sortY: playerRef.current.y, data: playerRef.current });
@@ -1097,7 +1264,15 @@ export default function App() {
       drawables.forEach((item) => {
         const data = item.data;
         const screen = worldToScreen(data.x, data.y, camX, camY);
-        if (screen.x < -64 || screen.y < -96 || screen.x > viewportWidth + 64 || screen.y > viewportHeight + 64) return;
+
+        if (
+          screen.x < -64 ||
+          screen.y < -96 ||
+          screen.x > viewportWidth + 64 ||
+          screen.y > viewportHeight + 64
+        ) {
+          return;
+        }
 
         if (item.type === "tree") drawTree(ctx, screen.x, screen.y, data.style);
         else if (item.type === "building") drawBuilding(ctx, data, screen.x, screen.y);
@@ -1120,21 +1295,26 @@ export default function App() {
           }
         } else if (item.type === "statue") drawStatue(ctx, screen.x, screen.y, data.type);
         else if (item.type === "desk") drawDesk(ctx, screen.x, screen.y, data.w, data.h, data.computer);
-        else if (item.type === "counter") drawCounter(ctx, screen.x, screen.y, data.w, data.h, data.type);
+        else if (item.type === "counter")
+          drawCounter(ctx, screen.x, screen.y, data.w, data.h, data.type);
         else if (item.type === "plant") drawPlant(ctx, screen.x, screen.y);
         else if (item.type === "decor") drawOfficeDecor(ctx, screen.x, screen.y, data.kind);
-        else if (item.type === "npc") drawCritter(ctx, screen.x, screen.y, data.species, data.dir, data.step || 0, false);
-        else if (item.type === "player") drawCritter(ctx, screen.x, screen.y, "beaver", data.dir, data.step, true);
+        else if (item.type === "npc")
+          drawCritter(ctx, screen.x, screen.y, data.species, data.dir, data.step || 0, false);
+        else if (item.type === "player")
+          drawCritter(ctx, screen.x, screen.y, "beaver", data.dir, data.step, true);
       });
 
       if (nearbyNpc) {
         const npcScreen = worldToScreen(nearbyNpc.x, nearbyNpc.y, camX, camY);
         rect(ctx, npcScreen.x + 6, npcScreen.y - 5, 4, 4, "#ffffff");
       }
+
       if (nearbyFolder) {
         const folderScreen = worldToScreen(officeFolder.x, officeFolder.y, camX, camY);
         rect(ctx, folderScreen.x + 6, folderScreen.y - 5, 4, 4, "#9be0ff");
       }
+
       if (dialog) {
         if (dialog.npcId) {
           const speaker = currentNpcs.find((npc) => npc.id === dialog.npcId);
@@ -1147,10 +1327,10 @@ export default function App() {
         }
       }
 
-      let raf = window.requestAnimationFrame(drawScene);
+      raf = window.requestAnimationFrame(drawScene);
     }
 
-    let raf = window.requestAnimationFrame(drawScene);
+    raf = window.requestAnimationFrame(drawScene);
     return () => window.cancelAnimationFrame(raf);
   }, [scene, dialog, nearbyNpc, nearbyFolder, viewportHeight, viewportWidth, quest.hasFolder, currentNpcs]);
 
@@ -1173,7 +1353,12 @@ export default function App() {
             ref={canvasRef}
             width={viewportWidth}
             height={viewportHeight}
-            style={{ width: viewportWidth * SCALE, height: viewportHeight * SCALE, imageRendering: "pixelated", display: "block" }}
+            style={{
+              width: viewportWidth * SCALE,
+              height: viewportHeight * SCALE,
+              imageRendering: "pixelated",
+              display: "block",
+            }}
           />
         </div>
 
