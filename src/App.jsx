@@ -113,6 +113,39 @@ const townFlowers = [
   { x: 8, y: 18 },
   { x: 3, y: 18 },
   { x: 12, y: 26 },
+  { x: 26, y: 12 },
+  { x: 27, y: 12 },
+  { x: 28, y: 12 },
+  { x: 30, y: 18 },
+  { x: 31, y: 18 },
+];
+
+const townLamps = [
+  { x: 21, y: 12 },
+  { x: 25, y: 12 },
+  { x: 29, y: 14 },
+  { x: 33, y: 14 },
+  { x: 37, y: 14 },
+];
+
+const townCrates = [
+  { x: 30, y: 8, color: "#9b6d43" },
+  { x: 31, y: 8, color: "#b07d50" },
+  { x: 27, y: 22, color: "#8e5f36" },
+  { x: 28, y: 22, color: "#b78654" },
+];
+
+const townCanalPosts = [
+  { x: 9, y: 2 },
+  { x: 9, y: 4 },
+  { x: 9, y: 6 },
+  { x: 5, y: 26 },
+  { x: 5, y: 28 },
+];
+
+const townBridges = [
+  { x: 8, y: 4, w: 2, h: 1 },
+  { x: 4, y: 28, w: 2, h: 1 },
 ];
 
 const townSigns = [
@@ -203,6 +236,9 @@ townRocks.forEach((rock) => townBlocking.add(keyFor(rock.x, rock.y)));
 townSigns.forEach((sign) => townBlocking.add(keyFor(sign.x, sign.y)));
 townBenches.forEach((bench) => townBlocking.add(keyFor(bench.x, bench.y)));
 townBarrels.forEach((barrel) => townBlocking.add(keyFor(barrel.x, barrel.y)));
+townCrates.forEach((crate) => townBlocking.add(keyFor(crate.x, crate.y)));
+townLamps.forEach((lamp) => townBlocking.add(keyFor(lamp.x, lamp.y)));
+townCanalPosts.forEach((post) => townBlocking.add(keyFor(post.x, post.y)));
 townStatues.forEach((statue) => townBlocking.add(keyFor(statue.x, statue.y)));
 townTrees.forEach((tree) => townBlocking.add(keyFor(tree.x, tree.y)));
 townBuildings.forEach((building) => {
@@ -401,6 +437,9 @@ function drawGround(ctx, sceneKey, worldX, worldY, screenX, screenY) {
   else if (type === "meeting") drawOfficeMeetingTile(ctx, screenX, screenY);
   else if (type === "wood") drawWoodTile(ctx, screenX, screenY);
   else if (type === "wall") drawWallTile(ctx, screenX, screenY);
+
+  rect(ctx, screenX, screenY + TILE - 1, TILE, 1, "rgba(0,0,0,0.08)");
+  rect(ctx, screenX + TILE - 1, screenY, 1, TILE, "rgba(255,255,255,0.04)");
 }
 
 function drawFence(ctx, x, y) {
@@ -430,6 +469,33 @@ function drawBarrel(ctx, x, y, color) {
   rect(ctx, x + 2, y + 4, 12, 2, "#1f2937");
   rect(ctx, x + 2, y + 10, 12, 2, "#1f2937");
   outline(ctx, x + 2, y + 2, 12, 12, "#0f172a");
+}
+
+function drawCrate(ctx, x, y, color) {
+  rect(ctx, x + 2, y + 2, 12, 12, color);
+  rect(ctx, x + 3, y + 3, 10, 2, "rgba(255,255,255,0.18)");
+  rect(ctx, x + 3, y + 7, 10, 1, "#6d4a2a");
+  rect(ctx, x + 7, y + 3, 1, 10, "#6d4a2a");
+  outline(ctx, x + 2, y + 2, 12, 12, "#5a3b20");
+}
+
+function drawLamp(ctx, x, y) {
+  rect(ctx, x + 7, y + 3, 2, 11, "#44505d");
+  rect(ctx, x + 5, y + 1, 6, 4, "#ffd36b");
+  rect(ctx, x + 6, y + 2, 4, 2, "#fff1b8");
+  rect(ctx, x + 4, y + 13, 8, 2, "rgba(0,0,0,0.18)");
+}
+
+function drawCanalPost(ctx, x, y) {
+  rect(ctx, x + 5, y + 4, 6, 10, "#8a5e2c");
+  rect(ctx, x + 4, y + 3, 8, 2, "#b07b3d");
+}
+
+function drawBridge(ctx, x, y, w, h) {
+  rect(ctx, x, y + 4, w * TILE, 8, "#9b6a3e");
+  for (let xx = 2; xx < w * TILE; xx += 5) rect(ctx, x + xx, y + 5, 2, 6, "#c08a58");
+  rect(ctx, x, y + 3, w * TILE, 1, "#704723");
+  rect(ctx, x, y + 12, w * TILE, 1, "#704723");
 }
 
 function drawRock(ctx, x, y) {
@@ -1001,49 +1067,16 @@ export default function App() {
   useEffect(() => {
     const npcLoop = window.setInterval(() => {
       if (scene === "town") {
-        setTownNpcs((prev) => prev.map((npc) => {
-          const occupied = new Set(prev.filter((other) => other.id !== npc.id).map((other) => keyFor(other.x, other.y)));
-          return chooseNpcMove("town", npc, occupied, playerRef.current);
-        }));
-      } else {
-        setOfficeNpcs((prev) => prev.map((npc) => {
-          const occupied = new Set(prev.filter((other) => other.id !== npc.id).map((other) => keyFor(other.x, other.y)));
-          return chooseNpcMove("office", npc, occupied, playerRef.current);
-        }));
-      }
-    }, NPC_MOVE_MS);
-    return () => window.clearInterval(npcLoop);
-  }, [scene]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    ctx.imageSmoothingEnabled = false;
-    let raf = 0;
-
-    function drawScene() {
-      ctx.clearRect(0, 0, viewportWidth, viewportHeight);
-      const sceneData = SCENES[scene];
-      const camX = clamp(playerRef.current.x - Math.floor(VIEW_COLS / 2), 0, Math.max(0, sceneData.w - VIEW_COLS));
-      const camY = clamp(playerRef.current.y - Math.floor(VIEW_ROWS / 2), 0, Math.max(0, sceneData.h - VIEW_ROWS));
-
-      for (let y = 0; y < VIEW_ROWS; y += 1) {
-        for (let x = 0; x < VIEW_COLS; x += 1) {
-          const worldX = camX + x;
-          const worldY = camY + y;
-          if (worldX < sceneData.w && worldY < sceneData.h) drawGround(ctx, scene, worldX, worldY, x * TILE, y * TILE);
-        }
-      }
-
-      const drawables = [];
-
-      if (scene === "town") {
         townTrees.forEach((tree) => drawables.push({ type: "tree", sortY: tree.y, data: tree }));
         townBuildings.forEach((building) => drawables.push({ type: "building", sortY: building.y + building.h, data: building }));
         townFences.forEach((fence) => drawables.push({ type: "fence", sortY: fence.y, data: fence }));
         townSigns.forEach((sign) => drawables.push({ type: "sign", sortY: sign.y, data: sign }));
         townBenches.forEach((bench) => drawables.push({ type: "bench", sortY: bench.y, data: bench }));
         townBarrels.forEach((barrel) => drawables.push({ type: "barrel", sortY: barrel.y, data: barrel }));
+        townCrates.forEach((crate) => drawables.push({ type: "crate", sortY: crate.y, data: crate }));
+        townLamps.forEach((lamp) => drawables.push({ type: "lamp", sortY: lamp.y, data: lamp }));
+        townCanalPosts.forEach((post) => drawables.push({ type: "canalPost", sortY: post.y, data: post }));
+        townBridges.forEach((bridge) => drawables.push({ type: "bridge", sortY: bridge.y + bridge.h, data: bridge }));
         townRocks.forEach((rock) => drawables.push({ type: "rock", sortY: rock.y, data: rock }));
         townFlowers.forEach((flower) => drawables.push({ type: "flower", sortY: flower.y, data: flower }));
         townFarmBeds.forEach((bed) => drawables.push({ type: "bed", sortY: bed.y + bed.h, data: bed }));
@@ -1072,6 +1105,10 @@ export default function App() {
         else if (item.type === "sign") drawSign(ctx, screen.x, screen.y, data.text);
         else if (item.type === "bench") drawBench(ctx, screen.x, screen.y);
         else if (item.type === "barrel") drawBarrel(ctx, screen.x, screen.y, data.color);
+        else if (item.type === "crate") drawCrate(ctx, screen.x, screen.y, data.color);
+        else if (item.type === "lamp") drawLamp(ctx, screen.x, screen.y);
+        else if (item.type === "canalPost") drawCanalPost(ctx, screen.x, screen.y);
+        else if (item.type === "bridge") drawBridge(ctx, screen.x, screen.y, data.w, data.h);
         else if (item.type === "rock") drawRock(ctx, screen.x, screen.y);
         else if (item.type === "flower") drawFlower(ctx, screen.x, screen.y);
         else if (item.type === "bed") {
@@ -1110,10 +1147,10 @@ export default function App() {
         }
       }
 
-      raf = window.requestAnimationFrame(drawScene);
+      let raf = window.requestAnimationFrame(drawScene);
     }
 
-    raf = window.requestAnimationFrame(drawScene);
+    let raf = window.requestAnimationFrame(drawScene);
     return () => window.cancelAnimationFrame(raf);
   }, [scene, dialog, nearbyNpc, nearbyFolder, viewportHeight, viewportWidth, quest.hasFolder, currentNpcs]);
 
