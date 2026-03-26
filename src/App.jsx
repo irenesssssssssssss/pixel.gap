@@ -4,13 +4,15 @@
 import React, { useState } from "react";
 import { useGameState } from "./hooks/useGameState";
 import GameCanvas    from "./components/GameCanvas";
+import IntroScreen   from "./components/IntroScreen";
 import PrivacyScreen from "./components/PrivacyScreen";
 
 export default function App() {
-  const [consented, setConsented] = useState(false);
+  const [screen, setScreen] = useState("start");
   const game = useGameState();
 
-  if (!consented) return <PrivacyScreen onConsent={() => setConsented(true)} />;
+  if (screen === "start") return <PrivacyScreen onConsent={() => setScreen("intro")} />;
+  if (screen === "intro") return <IntroScreen onStart={() => setScreen("game")} />;
 
   return (
     <div style={styles.page}>

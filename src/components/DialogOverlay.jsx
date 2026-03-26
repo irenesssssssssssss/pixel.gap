@@ -11,6 +11,7 @@ export default function DialogOverlay({ dialog, anchor, onChoice, onAdvance, onS
   const [cardPosition, setCardPosition] = useState(null);
   const backdropRef = useRef(null);
   const cardRef = useRef(null);
+  const positionLockRef = useRef(null);
 
   useEffect(() => {
     if (dialog?.phase === "reflection") {
@@ -19,6 +20,13 @@ export default function DialogOverlay({ dialog, anchor, onChoice, onAdvance, onS
       setValues({});
     }
     setSegmentIndex(0);
+  }, [dialog]);
+
+  useEffect(() => {
+    if (!dialog) {
+      positionLockRef.current = null;
+      setCardPosition(null);
+    }
   }, [dialog]);
 
   const isQuestion = dialog?.phase === "question";
@@ -37,6 +45,11 @@ export default function DialogOverlay({ dialog, anchor, onChoice, onAdvance, onS
   useLayoutEffect(() => {
     if (!dialog || isReflection) {
       setCardPosition(null);
+      return;
+    }
+
+    if (positionLockRef.current) {
+      setCardPosition(positionLockRef.current);
       return;
     }
 
@@ -74,12 +87,15 @@ export default function DialogOverlay({ dialog, anchor, onChoice, onAdvance, onS
       }
     }
 
-    setCardPosition({
+    const lockedPosition = {
       left,
       top: Math.max(margin, Math.min(top, maxTop)),
       placement,
-    });
-  }, [anchor, dialog, isReflection, segmentIndex, visibleActiveSegments.length]);
+    };
+
+    positionLockRef.current = lockedPosition;
+    setCardPosition(lockedPosition);
+  }, [anchor, dialog, isReflection]);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -280,6 +296,8 @@ const styles = {
   speechBubbleCard: {
     width: "min(640px, calc(100% - 24px))",
     maxWidth: "calc(100% - 24px)",
+    height: "min(236px, calc(100% - 24px))",
+    scrollbarGutter: "stable",
   },
   defaultInGameCard: {
     left: 12,
@@ -288,6 +306,7 @@ const styles = {
   },
   reflectionCard: {
     width: "min(760px, 94vw)",
+    height: "auto",
     background: "#f5eedf",
     boxShadow: "0 18px 36px rgba(37, 50, 41, 0.22)",
     position: "relative",
