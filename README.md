@@ -1,16 +1,39 @@
-# React + Vite
+What each layer is responsible for
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+constants/game.js	Single source of truth for all numeric constants
 
-Currently, two official plugins are available:
+engine/mapUtils.js	Pure math helpers, canvas primitives (rect/outline), coordinate transforms
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+engine/npcLogic.js	NPC movement AI — stationary toggle and patrol pathfinding
 
-## React Compiler
+data/townMap.js	All town Sets, arrays, blocking Set, townGroundTypeAt
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+data/officeMap.js	All office Sets, arrays, blocking Set, officeGroundTypeAt
 
-## Expanding the ESLint configuration
+data/scenes.js	SCENES registry, entry/exit tile coords, isWalkable
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+data/npcs.js	NPC start positions, dialogue strings, getTaskLabel
+
+renderer/tiles.js	Every ground tile draw function + drawGround dispatcher
+
+renderer/props.js	Trees, fences, benches, signs, barrels, flowers, rocks
+
+renderer/buildings.js	Lodge, house, cabin, office building, statues
+
+renderer/furniture.js	Desks, counters, plants, office decor items
+
+renderer/characters.js	drawCritter + drawSpeechBubble
+
+renderer/drawScene.js	Pure drawScene(ctx, params) — orchestrates the full frame
+
+hooks/useGameState.js	All useState/useRef/useEffect — the only place with game logic
+
+components/GameCanvas.jsx	Canvas element + RAF loop, passes state into drawScene
+
+components/HUD.jsx	Title, scene pill, status text
+
+components/InfoRow.jsx	Static info cards at the bottom
+
+App.jsx	Calls useGameState, renders the three components
+
+Key design rule: playerRef and npcRefs are mutable refs that are always kept in sync with state in useGameState. GameCanvas reads from them on every animation frame so the draw loop never has stale positions, while the useEffect dependency array still triggers a loop restart on state changes that matter for rendering (dialog, nearbyNpc, scene, etc.).
