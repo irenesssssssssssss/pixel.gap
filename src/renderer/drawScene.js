@@ -16,6 +16,13 @@ import {
 import {
   officeDesks, officeCounters, officePlants, officeDecor, officeFolder,
 } from "../data/officeMap";
+import {
+  owlHouseCounters,
+  owlHouseDecor,
+  owlHouseDesks,
+  owlHouseGuide,
+  owlHousePlants,
+} from "../data/owlHouseMap";
 import { drawGround } from "./tiles";
 import {
   drawFence, drawSign, drawBench, drawBarrel, drawCrate, drawLamp,
@@ -81,13 +88,19 @@ export function drawScene(ctx, {
     drawables.push({ type: "councilTable", sortY: townCouncilTable.y + townCouncilTable.h, data: townCouncilTable });
     townCouncilChairs.forEach((d) => drawables.push({ type: "chair", sortY: d.y, data: d }));
     townNpcs.forEach((d) => drawables.push({ type: "npc",           sortY: d.y,       data: d }));
-  } else {
+  } else if (scene === "office") {
     officeDesks.forEach((d) => drawables.push({ type: "desk",       sortY: d.y + d.h, data: d }));
     officeCounters.forEach((d) => drawables.push({ type: "counter", sortY: d.y + d.h, data: d }));
     officePlants.forEach((d) => drawables.push({ type: "plant",     sortY: d.y,       data: d }));
     officeDecor.forEach((d) => drawables.push({ type: "decor",      sortY: d.y,       data: d }));
     drawables.push({ type: "decor", sortY: officeFolder.y, data: officeFolder });
     officeNpcs.forEach((d) => drawables.push({ type: "npc",         sortY: d.y,       data: d }));
+  } else if (scene === "owlhouse") {
+    owlHouseDesks.forEach((d) => drawables.push({ type: "desk", sortY: d.y + d.h, data: d }));
+    owlHouseCounters.forEach((d) => drawables.push({ type: "counter", sortY: d.y + d.h, data: d }));
+    owlHousePlants.forEach((d) => drawables.push({ type: "plant", sortY: d.y, data: d }));
+    owlHouseDecor.forEach((d) => drawables.push({ type: "decor", sortY: d.y, data: d }));
+    drawables.push({ type: "npc", sortY: owlHouseGuide.y, data: owlHouseGuide });
   }
 
   drawables.push({ type: "player", sortY: player.y, data: player });

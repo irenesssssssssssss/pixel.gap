@@ -9,6 +9,7 @@ import DialogOverlay from "./DialogOverlay";
 import MiniMap from "./MiniMap";
 import ResultsOverlay from "./ResultsOverlay";
 import CouncilMeeting from "./CouncilMeeting";
+import LearningHouse from "./LearningHouse";
 
 export default function GameCanvas({
   scene,
@@ -22,12 +23,15 @@ export default function GameCanvas({
   reportOpen,
   resultsReport,
   councilOpen,
+  learningHouseOpen,
   onChoice,
   onAdvance,
   onSubmitReflection,
   onCloseResults,
   onOpenResults,
   onCloseCouncil,
+  onOpenLearningHouse,
+  onCloseLearningHouse,
 }) {
   const canvasRef      = useRef(null);
   const viewportWidth  = VIEW_COLS * TILE;
@@ -95,11 +99,13 @@ export default function GameCanvas({
               <div style={styles.bannerText}>{banner.message}</div>
             </div>
           )}
-          <MiniMap
-            scene={scene}
-            player={playerRef.current}
-            objectiveTarget={objectiveTarget}
-          />
+          {scene !== "owlhouse" && (
+            <MiniMap
+              scene={scene}
+              player={playerRef.current}
+              objectiveTarget={objectiveTarget}
+            />
+          )}
           <DialogOverlay
             dialog={dialog}
             onChoice={onChoice}
@@ -112,11 +118,22 @@ export default function GameCanvas({
               onClose={onCloseCouncil}
             />
           )}
+          {learningHouseOpen && !councilOpen && !reportOpen && (
+            <LearningHouse
+              quest={quest}
+              onClose={onCloseLearningHouse}
+            />
+          )}
           {reportOpen && (
             <ResultsOverlay
               report={resultsReport}
               onClose={onCloseResults}
             />
+          )}
+          {scene === "owlhouse" && !learningHouseOpen && !councilOpen && !reportOpen && (
+            <button type="button" style={styles.learningButton} onClick={onOpenLearningHouse}>
+              talk to olive
+            </button>
           )}
           {!reportOpen && quest?.stage === "complete" && (
             <button type="button" style={styles.reportButton} onClick={onOpenResults}>
@@ -200,6 +217,22 @@ const styles = {
     padding: "10px 14px",
     background: "rgba(248, 244, 235, 0.96)",
     color: "#33453b",
+    fontSize: 13,
+    fontWeight: 800,
+    letterSpacing: 0.2,
+    cursor: "pointer",
+    boxShadow: "0 10px 24px rgba(38, 54, 42, 0.2)",
+  },
+  learningButton: {
+    position: "absolute",
+    right: 14,
+    bottom: 14,
+    zIndex: 25,
+    border: "none",
+    borderRadius: 999,
+    padding: "11px 16px",
+    background: "rgba(230, 241, 208, 0.96)",
+    color: "#304023",
     fontSize: 13,
     fontWeight: 800,
     letterSpacing: 0.2,

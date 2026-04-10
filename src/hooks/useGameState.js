@@ -13,13 +13,22 @@ import {
   getNpcDialog,
   getTaskLabel,
 } from "../data/npcs";
-import { SCENES, TOWN_OFFICE_ENTRY, OFFICE_EXIT_TILE, isWalkable } from "../data/scenes";
+import {
+  SCENES,
+  TOWN_OFFICE_ENTRY,
+  OFFICE_EXIT_TILE,
+  TOWN_OWL_HOUSE_ENTRY,
+  OWL_HOUSE_EXIT_TILE,
+  isWalkable,
+} from "../data/scenes";
 import { COUNCIL_SEAT } from "../data/townMap";
 import { keyFor } from "../engine/mapUtils";
 import { chooseNpcMove } from "../engine/npcLogic";
 import { logChoice } from "../engine/logger";
 import { buildResultsReport, extractQuestionPrompt } from "../engine/results";
 import { makePlayerChoiceSegment, parseSpeechSegments } from "../engine/dialogSegments";
+
+const EMPTY_NPCS = [];
 
 const INITIAL_QUEST = {
   stage: QUEST_STAGES.MEET_OLIVE,
@@ -71,6 +80,7 @@ export function useGameState() {
   const [banner, setBanner] = useState({ title: "New objective", message: getTaskLabel(INITIAL_QUEST) });
   const [reportOpen, setReportOpen] = useState(false);
   const [councilOpen, setCouncilOpen] = useState(false);
+  const [learningHouseOpen, setLearningHouseOpen] = useState(false);
 
   playerRef.current = player;
   townNpcsRef.current = townNpcs;
@@ -78,7 +88,11 @@ export function useGameState() {
   dialogRef.current = dialog;
 
   const currentNpcs = useMemo(
-    () => (scene === "town" ? townNpcs : officeNpcs),
+    () => {
+      if (scene === "town") return townNpcs;
+      if (scene === "office") return officeNpcs;
+      return EMPTY_NPCS;
+    },
     [scene, townNpcs, officeNpcs]
   );
   const resultsReport = useMemo(() => buildResultsReport(quest), [quest]);
@@ -167,6 +181,14 @@ export function useGameState() {
   function closeCouncil() {
     setCouncilOpen(false);
     setQuest((prev) => applyQuestAdvance(prev, QUEST_STAGES.COMPLETE));
+  }
+
+  function openLearningHouse() {
+    setLearningHouseOpen(true);
+  }
+
+  function closeLearningHouse() {
+    setLearningHouseOpen(false);
   }
 
   function setPlayerProfile(profile) {
@@ -449,6 +471,22 @@ export function useGameState() {
     dismissDialog();
   }
 
+  function enterOwlHouse() {
+    setScene("owlhouse");
+    setPlayer((prev) => ({ ...prev, x: 9, y: 13, dir: "up" }));
+    setLearningHouseOpen(true);
+    flashBanner("olive's learning house", "ask esg questions or leave an anonymous demo note.", 2600);
+    dismissDialog();
+  }
+
+  function exitOwlHouse() {
+    setLearningHouseOpen(false);
+    setScene("town");
+    setPlayer((prev) => ({ ...prev, x: 12, y: 9, dir: "down" }));
+    setQuest((prev) => syncStatus(prev));
+    dismissDialog();
+  }
+
   // Auto-open council meeting when stage reaches POST_GAME
   useEffect(() => {
     if (quest.stage !== QUEST_STAGES.POST_GAME) return;
@@ -566,6 +604,7 @@ export function useGameState() {
     function tryMove(dx, dy, dir) {
       if (reportOpen) return;
       if (councilOpen) return;
+      if (learningHouseOpen) return;
       if (dialogRef.current?.phase === "question" || dialogRef.current?.phase === "reflection") return;
 
       setPlayer((prev) => {
@@ -582,6 +621,10 @@ export function useGameState() {
           }
         }
 
+        if (scene === "town" && nx === TOWN_OWL_HOUSE_ENTRY.x && ny === TOWN_OWL_HOUSE_ENTRY.y) {
+          window.setTimeout(() => enterOwlHouse(), 0);
+        }
+
         if (scene === "office" && nx === OFFICE_EXIT_TILE.x && ny === OFFICE_EXIT_TILE.y) {
           if (
             quest.stage === QUEST_STAGES.RETURN_TO_OLIVE ||
@@ -590,6 +633,10 @@ export function useGameState() {
           ) {
             window.setTimeout(() => exitOffice(), 0);
           }
+        }
+
+        if (scene === "owlhouse" && nx === OWL_HOUSE_EXIT_TILE.x && ny === OWL_HOUSE_EXIT_TILE.y) {
+          window.setTimeout(() => exitOwlHouse(), 0);
         }
 
         return next;
@@ -607,6 +654,11 @@ export function useGameState() {
 
       if (reportOpen) {
         if (e.key === "Escape") closeResultsReport();
+        return;
+      }
+
+      if (learningHouseOpen) {
+        if (e.key === "Escape") closeLearningHouse();
         return;
       }
 
@@ -643,7 +695,7 @@ export function useGameState() {
       window.removeEventListener("keyup", onKeyUp);
       window.clearInterval(loop);
     };
-  }, [councilOpen, currentNpcs, quest, reportOpen, scene]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [councilOpen, currentNpcs, learningHouseOpen, quest, reportOpen, scene]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // NPC movement loop
   useEffect(() => {
@@ -657,7 +709,7 @@ export function useGameState() {
         );
 
       if (scene === "town") mover(setTownNpcs, "town");
-      else mover(setOfficeNpcs, "office");
+      else if (scene === "office") mover(setOfficeNpcs, "office");
     }, NPC_MOVE_MS);
 
     return () => window.clearInterval(loop);
@@ -692,5 +744,8 @@ export function useGameState() {
     setPlayerProfile,
     councilOpen,
     closeCouncil,
+    learningHouseOpen,
+    openLearningHouse,
+    closeLearningHouse,
   };
 }

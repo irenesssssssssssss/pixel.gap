@@ -13,3 +13,5 @@ export const TOWN_W = 50;
 export const TOWN_H = 34;
 export const OFFICE_W = 24;
 export const OFFICE_H = 18;
+export const OWL_HOUSE_W = 18;
+export const OWL_HOUSE_H = 16;

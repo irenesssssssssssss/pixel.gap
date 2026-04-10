@@ -116,6 +116,26 @@ export function drawHouse(ctx, building, x, y) {
     rect(ctx, doorX - 6,  py + height - 6, doorW + 12, 3, "#a4b4c2");
     rect(ctx, doorX - 8,  py + height - 4, doorW + 16, 2, "#b8c8d4");
     rect(ctx, doorX - 6,  py + height - 2, doorW + 12, 2, "#ccd8e2");
+  } else if (building.type === "owlhouse") {
+    rect(ctx, px + 1, py + height, width, 4, "rgba(0,0,0,0.14)");
+    rect(ctx, px + 2, py + 14, width - 4, height - 16, "#f5ead4");
+    rect(ctx, px + 2, py + 14, width - 4, 3, "#fff8ee");
+    rect(ctx, px, py + 7, width, 18, "#7b5944");
+    rect(ctx, px + 4, py + 3, width - 8, 10, "#a67a5a");
+    rect(ctx, px + 8, py + 28, 12, 10, "#c9def0");
+    rect(ctx, px + 8, py + 28, 12, 2, "#eef8ff");
+    rect(ctx, px + width - 20, py + 28, 12, 10, "#c9def0");
+    rect(ctx, px + width - 20, py + 28, 12, 2, "#eef8ff");
+    rect(ctx, px + width / 2 - 6, py + 34, 12, 14, "#8f6d52");
+    rect(ctx, px + width / 2 - 5, py + 36, 10, 10, "#c9a27e");
+    rect(ctx, px + width / 2 - 8, py + 20, 16, 10, "#6b8b59");
+    rect(ctx, px + width / 2 - 6, py + 22, 12, 6, "#88ab74");
+    rect(ctx, px + width / 2 - 1, py + 18, 2, 2, "#6b8b59");
+    rect(ctx, px + width / 2 - 1, py + 20, 2, 6, "#4f6842");
+    rect(ctx, px + width / 2 - 3, py + 24, 2, 2, "#f4efdd");
+    rect(ctx, px + width / 2 + 1, py + 24, 2, 2, "#f4efdd");
+    drawPixelText(ctx, "LEARN", px + 20, py - 11, "#f8f1dc", 2);
+    drawPixelText(ctx, "MORE ESG", px + 7, py - 2, "#e3f3d0", 2);
   } else {
     // Generic house
     rect(ctx, px + 1, py + height, width, 4, "rgba(0,0,0,0.14)");

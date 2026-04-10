@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildCouncilSystemPrompt, parseCouncilResponse } from "./src/engine/councilAI.js";
+import { buildESGGuideInstructions } from "./src/engine/esgGuideAI.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,6 +38,11 @@ const server = createServer(async (req, res) => {
 
     if (req.method === "POST" && url.pathname === "/api/council-ai") {
       await handleCouncilAI(req, res);
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/esg-guide") {
+      await handleESGGuide(req, res);
       return;
     }
 
@@ -137,6 +143,67 @@ async function handleCouncilAI(req, res) {
     audioMime: audioPayload.audioMime,
     audioError: audioPayload.audioError,
   });
+}
+
+async function handleESGGuide(req, res) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    sendJson(res, 500, {
+      error:
+        "Missing OPENAI_API_KEY on the server. Add it to gap.game/.env.local or the workspace-root .env.local.",
+    });
+    return;
+  }
+
+  const body = await readJsonBody(req);
+  const quest = body?.quest ?? {};
+  const messages = Array.isArray(body?.messages) ? body.messages : [];
+
+  const openAiResponse = await fetch(OPENAI_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      instructions: buildESGGuideInstructions(quest),
+      input: mapConversationHistory(messages),
+      max_output_tokens: 420,
+      text: {
+        format: {
+          type: "text",
+        },
+      },
+    }),
+  });
+
+  const rawResponse = await openAiResponse.text();
+  const payload = tryParseJson(rawResponse);
+
+  if (!openAiResponse.ok) {
+    const apiMessage =
+      payload?.error?.message ||
+      payload?.error?.type ||
+      rawResponse ||
+      "Unknown OpenAI error.";
+
+    sendJson(res, openAiResponse.status, {
+      error: `OpenAI API error ${openAiResponse.status}: ${apiMessage}`,
+    });
+    return;
+  }
+
+  const text = extractResponseText(payload);
+  if (!text) {
+    sendJson(res, 502, {
+      error: "OpenAI returned no text output for the ESG guide response.",
+      details: isDevelopment() ? payload : undefined,
+    });
+    return;
+  }
+
+  sendJson(res, 200, { text });
 }
 
 function mapConversationHistory(conversationHistory) {

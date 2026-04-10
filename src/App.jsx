@@ -41,12 +41,15 @@ export default function App() {
           reportOpen={game.reportOpen}
           resultsReport={game.resultsReport}
           councilOpen={game.councilOpen}
+          learningHouseOpen={game.learningHouseOpen}
           onChoice={game.handleChoice}
           onAdvance={game.handleAdvanceDialog}
           onSubmitReflection={game.handleReflectionSubmit}
           onCloseResults={game.closeResultsReport}
           onOpenResults={game.openResultsReport}
           onCloseCouncil={game.closeCouncil}
+          onOpenLearningHouse={game.openLearningHouse}
+          onCloseLearningHouse={game.closeLearningHouse}
         />
       </div>
     </div>
