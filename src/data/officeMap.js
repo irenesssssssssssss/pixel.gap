@@ -1,5 +1,3 @@
-// All static map data for the office scene.
-// The indoor route is a single guided corridor through Delaware.
 
 import { OFFICE_W, OFFICE_H } from "../constants/game";
 import { addRect, keyFor, isInSet } from "../engine/mapUtils";

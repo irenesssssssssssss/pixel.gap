@@ -3,16 +3,27 @@
 
 import React, { useState } from "react";
 import { useGameState } from "./hooks/useGameState";
-import GameCanvas    from "./components/GameCanvas";
-import IntroScreen   from "./components/IntroScreen";
-import PrivacyScreen from "./components/PrivacyScreen";
+import GameCanvas     from "./components/GameCanvas";
+import IntroScreen    from "./components/IntroScreen";
+import PrivacyScreen  from "./components/PrivacyScreen";
+import ProfileScreen  from "./components/ProfileScreen";
 
 export default function App() {
   const [screen, setScreen] = useState("start");
   const game = useGameState();
 
-  if (screen === "start") return <PrivacyScreen onConsent={() => setScreen("intro")} />;
-  if (screen === "intro") return <IntroScreen onStart={() => setScreen("game")} />;
+  if (screen === "start")   return <PrivacyScreen onConsent={() => setScreen("intro")} />;
+  if (screen === "intro")   return <IntroScreen onStart={() => setScreen("profile")} />;
+  if (screen === "profile") {
+    return (
+      <ProfileScreen
+        onSubmit={(profile) => {
+          game.setPlayerProfile(profile);
+          setScreen("game");
+        }}
+      />
+    );
+  }
 
   return (
     <div style={styles.page}>
@@ -29,11 +40,13 @@ export default function App() {
           dialog={game.dialog}
           reportOpen={game.reportOpen}
           resultsReport={game.resultsReport}
+          councilOpen={game.councilOpen}
           onChoice={game.handleChoice}
           onAdvance={game.handleAdvanceDialog}
           onSubmitReflection={game.handleReflectionSubmit}
           onCloseResults={game.closeResultsReport}
           onOpenResults={game.openResultsReport}
+          onCloseCouncil={game.closeCouncil}
         />
       </div>
     </div>

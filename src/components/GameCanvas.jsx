@@ -5,11 +5,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VIEW_COLS, VIEW_ROWS, TILE, SCALE } from "../constants/game";
 import { drawScene } from "../renderer/drawScene";
-import { SCENES } from "../data/scenes";
-import { clamp, worldToScreen } from "../engine/mapUtils";
 import DialogOverlay from "./DialogOverlay";
 import MiniMap from "./MiniMap";
 import ResultsOverlay from "./ResultsOverlay";
+import CouncilMeeting from "./CouncilMeeting";
 
 export default function GameCanvas({
   scene,
@@ -22,11 +21,13 @@ export default function GameCanvas({
   dialog,
   reportOpen,
   resultsReport,
+  councilOpen,
   onChoice,
   onAdvance,
   onSubmitReflection,
   onCloseResults,
   onOpenResults,
+  onCloseCouncil,
 }) {
   const canvasRef      = useRef(null);
   const viewportWidth  = VIEW_COLS * TILE;
@@ -72,33 +73,6 @@ export default function GameCanvas({
     return () => cancelAnimationFrame(raf);
   }, [scene, nearbyTarget, objectiveTarget]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const activeDialogAnchor = (() => {
-    if (!dialog || dialog.phase === "reflection") return null;
-
-    const player = playerRef.current;
-    const sceneData = SCENES[scene];
-    const camX = clamp(player.x - Math.floor(VIEW_COLS / 2), 0, Math.max(0, sceneData.w - VIEW_COLS));
-    const camY = clamp(player.y - Math.floor(VIEW_ROWS / 2), 0, Math.max(0, sceneData.h - VIEW_ROWS));
-
-    const npcEntity =
-      npcRefs.town.current.find((npc) => npc.id === dialog.npcId) ||
-      npcRefs.office.current.find((npc) => npc.id === dialog.npcId) ||
-      null;
-
-    const entity = npcEntity || nearbyTarget || objectiveTarget;
-    if (!entity || (entity.scene && entity.scene !== scene)) return null;
-
-    const screen = worldToScreen(entity.x, entity.y, camX, camY);
-    const canvasWidth = viewportWidth * displayScale;
-    const canvasHeight = viewportHeight * displayScale;
-    const anchorTop = 4 + screen.y * displayScale - 6;
-
-    return {
-      left: clamp(4 + (screen.x + TILE / 2) * displayScale, 96, canvasWidth - 96),
-      top: clamp(anchorTop, 24, canvasHeight - 24),
-      placement: anchorTop < 150 ? "below" : "above",
-    };
-  })();
 
   return (
     <div style={styles.stageCard}>
@@ -128,11 +102,16 @@ export default function GameCanvas({
           />
           <DialogOverlay
             dialog={dialog}
-            anchor={activeDialogAnchor}
             onChoice={onChoice}
             onAdvance={onAdvance}
             onSubmitReflection={onSubmitReflection}
           />
+          {councilOpen && !reportOpen && (
+            <CouncilMeeting
+              quest={quest}
+              onClose={onCloseCouncil}
+            />
+          )}
           {reportOpen && (
             <ResultsOverlay
               report={resultsReport}

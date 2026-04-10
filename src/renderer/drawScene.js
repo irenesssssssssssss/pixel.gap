@@ -150,6 +150,7 @@ export function drawScene(ctx, {
     const onScreen = s.x >= -8 && s.y >= -8 && s.x <= viewportWidth - 8 && s.y <= viewportHeight - 8;
 
     if (onScreen) {
+      // Golden star marker above on-screen objective
       rect(ctx, s.x - 2, s.y - 3, 20, 20, "rgba(255,245,221,0.2)");
       rect(ctx, s.x + 1, s.y - 19, 14, 5, "#455748");
       rect(ctx, s.x + 3, s.y - 18, 10, 3, "#f4e2a1");
@@ -157,11 +158,57 @@ export function drawScene(ctx, {
       rect(ctx, s.x + 6, s.y - 12, 4, 4, "#fff6d6");
       rect(ctx, s.x + 5, s.y - 6, 6, 2, "#9b8750");
     } else {
-      const edgeX = clamp(s.x + 8, 10, viewportWidth - 18);
-      const edgeY = clamp(s.y + 8, 10, viewportHeight - 18);
-      rect(ctx, edgeX - 1, edgeY - 1, 12, 12, "#455748");
-      rect(ctx, edgeX, edgeY, 10, 10, "#dbc172");
-      rect(ctx, edgeX + 3, edgeY + 2, 4, 5, "#fff6d6");
+      // Directional arrow at the viewport edge pointing toward the objective
+      const cx = viewportWidth / 2;
+      const cy = viewportHeight / 2;
+      // Use tile center of the objective as target point
+      const tx = s.x + 8;
+      const ty = s.y + 8;
+      const dx = tx - cx;
+      const dy = ty - cy;
+      const angle = Math.atan2(dy, dx);
+      const margin = 20;
+
+      // Find intersection of the ray with the viewport boundary
+      const scaleX = Math.abs(dx) > 0.01 ? (dx > 0 ? (viewportWidth - margin - cx) : (cx - margin)) / Math.abs(dx) : Infinity;
+      const scaleY = Math.abs(dy) > 0.01 ? (dy > 0 ? (viewportHeight - margin - cy) : (cy - margin)) / Math.abs(dy) : Infinity;
+      const s2     = Math.min(scaleX, scaleY);
+      const ax     = Math.round(cx + dx * s2);
+      const ay     = Math.round(cy + dy * s2);
+
+      const sz = 9;
+      ctx.save();
+      ctx.translate(ax, ay);
+      ctx.rotate(angle);
+
+      // Drop shadow
+      ctx.fillStyle = "rgba(0,0,0,0.45)";
+      ctx.beginPath();
+      ctx.moveTo(-sz + 1,  -sz / 2 + 1);
+      ctx.lineTo( sz + 1,            1);
+      ctx.lineTo(-sz + 1,   sz / 2 + 1);
+      ctx.closePath();
+      ctx.fill();
+
+      // Arrow body
+      ctx.fillStyle = "#dbc172";
+      ctx.beginPath();
+      ctx.moveTo(-sz, -sz / 2);
+      ctx.lineTo( sz,        0);
+      ctx.lineTo(-sz,  sz / 2);
+      ctx.closePath();
+      ctx.fill();
+
+      // Inner highlight
+      ctx.fillStyle = "#fff6d6";
+      ctx.beginPath();
+      ctx.moveTo(-4, -3);
+      ctx.lineTo( 3,  0);
+      ctx.lineTo(-4,  3);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
     }
   }
 }

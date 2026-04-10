@@ -1,6 +1,11 @@
 import React from "react";
 
 const PILLAR_LABELS = {
+  env: "Environmental Stewardship",
+  people: "People & Culture",
+  conduct: "Business Conduct",
+  chain: "Responsible Value Chain",
+  // legacy keys kept for backward compatibility
   environment: "Environmental",
   social: "Social",
   governance: "Governance",
@@ -27,12 +32,12 @@ export default function ResultsOverlay({ report, onClose }) {
 
         <div style={styles.content}>
           <section style={styles.section}>
-            <div style={styles.sectionTitle}>ESG profile</div>
+            <div style={styles.sectionTitle}>Pillar visibility scores</div>
             <div style={styles.scoreGrid}>
               {scoreEntries.map(([pillar, value]) => (
                 <div key={pillar} style={styles.scoreCard}>
                   <div style={styles.scoreTopRow}>
-                    <span style={styles.scoreLabel}>{PILLAR_LABELS[pillar]}</span>
+                    <span style={styles.scoreLabel}>{PILLAR_LABELS[pillar] || pillar}</span>
                     <span style={styles.scoreValue}>{value}%</span>
                   </div>
                   <div style={styles.scoreTrack}>
@@ -40,11 +45,7 @@ export default function ResultsOverlay({ report, onClose }) {
                       style={{
                         ...styles.scoreFill,
                         width: `${value}%`,
-                        ...(pillar === "environment"
-                          ? styles.environmentFill
-                          : pillar === "social"
-                            ? styles.socialFill
-                            : styles.governanceFill),
+                        background: PILLAR_FILL_COLORS[pillar] || styles.environmentFill.background,
                       }}
                     />
                   </div>
@@ -103,6 +104,17 @@ export default function ResultsOverlay({ report, onClose }) {
     </div>
   );
 }
+
+const PILLAR_FILL_COLORS = {
+  env: "linear-gradient(90deg, #7ab68b, #4e8f64)",
+  people: "linear-gradient(90deg, #d8b58c, #b48659)",
+  conduct: "linear-gradient(90deg, #8ca6a0, #617d77)",
+  chain: "linear-gradient(90deg, #a08cb4, #7a6391)",
+  // legacy
+  environment: "linear-gradient(90deg, #7ab68b, #4e8f64)",
+  social: "linear-gradient(90deg, #d8b58c, #b48659)",
+  governance: "linear-gradient(90deg, #8ca6a0, #617d77)",
+};
 
 const styles = {
   backdrop: {

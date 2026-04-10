@@ -1,5 +1,4 @@
-// Scene registry and cross-scene helpers.
-// isWalkable lives here because it needs both the SCENES map and keyFor.
+
 
 import { TOWN_W, TOWN_H, OFFICE_W, OFFICE_H } from "../constants/game";
 import { townBlocking, townGroundTypeAt } from "./townMap";
@@ -25,11 +24,7 @@ export const SCENES = {
 export const TOWN_OFFICE_ENTRY = { x: 25, y: 7 };
 export const OFFICE_EXIT_TILE  = { x: 21, y: 8 };
 
-/**
- * Check whether a tile is passable.
- * Takes the resolved scene data object (not a key string) so callers
- * do one SCENES[key] lookup and can reuse it.
- */
+
 export function isWalkable(sceneData, x, y, occupied = new Set()) {
   if (x < 0 || y < 0 || x >= sceneData.w || y >= sceneData.h) return false;
   if (sceneData.blocking.has(keyFor(x, y))) return false;

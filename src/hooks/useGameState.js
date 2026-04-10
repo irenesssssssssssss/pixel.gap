@@ -9,6 +9,7 @@ import {
   QUEST_STAGES,
   TOWN_STATION_IDS,
   OFFICE_STATION_IDS,
+  PILLAR_STEP_PREFIXES,
   getNpcDialog,
   getTaskLabel,
 } from "../data/npcs";
@@ -26,17 +27,28 @@ const INITIAL_QUEST = {
   choices: [],
   inspected: [],
   reflections: {},
+  pillarBeats: {},   // { frank: 0|1, otis: 0|1, suzy: 0|1, hazel: 0|1 }
+  pillarOrder: null, // { town: ["frank","otis"] | ["otis","frank"], office: ["suzy","hazel"] | ["hazel","suzy"] }
+  playerProfile: null, // { roleLevel, branch, country }
 };
 
 const AUTO_TRIGGERABLE_STAGES = new Set([
   QUEST_STAGES.MEET_OLIVE,
-  QUEST_STAGES.ARRIVAL_INSPECTION,
-  QUEST_STAGES.OLIVE_DEBRIEF,
-  QUEST_STAGES.TOWN_STATIONS,
-  QUEST_STAGES.OFFICE_STATIONS,
+  QUEST_STAGES.BASELINE_DILEMMA,
+  QUEST_STAGES.TOWN_PILLARS,
+  QUEST_STAGES.OFFICE_PILLARS,
   QUEST_STAGES.RETURN_TO_OLIVE,
-  QUEST_STAGES.ROWAN_FINAL,
+  QUEST_STAGES.POST_GAME,
 ]);
+
+// Determine pillar order from the opening dilemma choice.
+function derivePillarOrder(choiceKey) {
+  // env / people → town NPC first (frank or otis)
+  // conduct / chain → office pillar preferred first → office order changes
+  const town = choiceKey === "people" ? ["otis", "frank"] : ["frank", "otis"];
+  const office = choiceKey === "chain" ? ["hazel", "suzy"] : ["suzy", "hazel"];
+  return { town, office };
+}
 
 export function useGameState() {
   const keysRef = useRef({});
@@ -58,6 +70,7 @@ export function useGameState() {
   const [dialog, setDialog] = useState(null);
   const [banner, setBanner] = useState({ title: "New objective", message: getTaskLabel(INITIAL_QUEST) });
   const [reportOpen, setReportOpen] = useState(false);
+  const [councilOpen, setCouncilOpen] = useState(false);
 
   playerRef.current = player;
   townNpcsRef.current = townNpcs;
@@ -79,33 +92,37 @@ export function useGameState() {
   const objectiveTarget = useMemo(() => {
     const findTownNpc = (id) => townNpcs.find((npc) => npc.id === id) || null;
     const findOfficeNpc = (id) => officeNpcs.find((npc) => npc.id === id) || null;
+    const townOrder = quest.pillarOrder?.town || TOWN_STATION_IDS;
+    const officeOrder = quest.pillarOrder?.office || OFFICE_STATION_IDS;
 
     switch (quest.stage) {
       case QUEST_STAGES.MEET_OLIVE:
-      case QUEST_STAGES.OLIVE_DEBRIEF:
+      case QUEST_STAGES.BASELINE_DILEMMA:
         return findTownNpc("olive");
-      case QUEST_STAGES.COUNCIL_REFLECTION:
-        return COUNCIL_SEAT;
+
+      case QUEST_STAGES.TOWN_PILLARS: {
+        const next = townOrder.find((id) => !quest.visited.includes(id));
+        if (next) return findTownNpc(next);
+        return { x: TOWN_OFFICE_ENTRY.x, y: TOWN_OFFICE_ENTRY.y, label: "office doorway", scene: "town" };
+      }
+
+      case QUEST_STAGES.GO_TO_OFFICE:
+        return { x: TOWN_OFFICE_ENTRY.x, y: TOWN_OFFICE_ENTRY.y, label: "office doorway", scene: "town" };
+
+      case QUEST_STAGES.OFFICE_PILLARS: {
+        const next = officeOrder.find((id) => !quest.visited.includes(id));
+        if (next) return findOfficeNpc(next);
+        return { x: OFFICE_EXIT_TILE.x, y: OFFICE_EXIT_TILE.y, label: "terrace door", scene: "office" };
+      }
+
       case QUEST_STAGES.RETURN_TO_OLIVE:
         return scene === "office"
           ? { x: OFFICE_EXIT_TILE.x, y: OFFICE_EXIT_TILE.y, label: "terrace door", scene: "office" }
           : COUNCIL_SEAT;
-      case QUEST_STAGES.ARRIVAL_INSPECTION:
-      case QUEST_STAGES.OLIVE_DEBRIEF:
-        return findTownNpc("olive");
-      case QUEST_STAGES.TOWN_STATIONS:
-        if (!quest.visited.includes("frank")) return findTownNpc("frank");
-        if (!quest.visited.includes("otis")) return findTownNpc("otis");
-        return { x: TOWN_OFFICE_ENTRY.x, y: TOWN_OFFICE_ENTRY.y, label: "office doorway", scene: "town" };
-      case QUEST_STAGES.GO_TO_OFFICE:
-        return { x: TOWN_OFFICE_ENTRY.x, y: TOWN_OFFICE_ENTRY.y, label: "office doorway", scene: "town" };
-      case QUEST_STAGES.OFFICE_STATIONS:
-        if (!quest.visited.includes("suzy")) return findOfficeNpc("suzy");
-        if (!quest.visited.includes("daisy")) return findOfficeNpc("daisy");
-        if (!quest.visited.includes("hazel")) return findOfficeNpc("hazel");
-        return { x: OFFICE_EXIT_TILE.x, y: OFFICE_EXIT_TILE.y, label: "terrace door", scene: "office" };
-      case QUEST_STAGES.ROWAN_FINAL:
+
+      case QUEST_STAGES.POST_GAME:
         return findTownNpc("rowan");
+
       default:
         return null;
     }
@@ -130,36 +147,33 @@ export function useGameState() {
 
   function releaseNpcMovement(npcId) {
     if (!npcId) return;
-
     const release = (npc) =>
       npc.id !== npcId
         ? npc
-        : {
-            ...npc,
-            stationary: false,
-            patrol: npc.councilPatrol || npc.patrol,
-          };
-
+        : { ...npc, stationary: false, patrol: npc.councilPatrol || npc.patrol };
     setTownNpcs((prev) => prev.map(release));
     setOfficeNpcs((prev) => prev.map(release));
   }
 
   function releaseCouncilMovement() {
     setTownNpcs((prev) =>
-      prev.map((npc) => ({
-        ...npc,
-        stationary: false,
-        patrol: npc.councilPatrol || npc.patrol,
-      }))
+      prev.map((npc) => ({ ...npc, stationary: false, patrol: npc.councilPatrol || npc.patrol }))
     );
   }
 
-  function closeResultsReport() {
-    setReportOpen(false);
+  function closeResultsReport() { setReportOpen(false); }
+  function openResultsReport() { setReportOpen(true); }
+
+  function closeCouncil() {
+    setCouncilOpen(false);
+    setQuest((prev) => applyQuestAdvance(prev, QUEST_STAGES.COMPLETE));
   }
 
-  function openResultsReport() {
-    setReportOpen(true);
+  function setPlayerProfile(profile) {
+    // Reset player to spawn and clear any accidental key state before entering the world.
+    setPlayer({ x: 24, y: 32, dir: "up", step: 0, species: "beaver" });
+    keysRef.current = {};
+    setQuest((prev) => syncStatus({ ...prev, playerProfile: profile }));
   }
 
   function recordChoice(dialogState, choice) {
@@ -170,25 +184,33 @@ export function useGameState() {
     });
   }
 
-  function applyQuestAdvance(prevQuest, advanceTo, npcId = null) {
+  function applyQuestAdvance(prevQuest, advanceTo, npcId = null, pillarNpcId = null) {
     let next = prevQuest;
 
     if (npcId && !next.visited.includes(npcId)) {
       next = { ...next, visited: [...next.visited, npcId] };
     }
 
+    // Mark pillar NPC beat as complete (sequence finished)
+    if (pillarNpcId && ["frank", "otis", "suzy", "hazel"].includes(pillarNpcId)) {
+      next = {
+        ...next,
+        pillarBeats: { ...next.pillarBeats, [pillarNpcId]: 1 },
+      };
+    }
+
     if (advanceTo) {
       next = { ...next, stage: advanceTo };
-    } else if (
-      next.stage === QUEST_STAGES.TOWN_STATIONS &&
-      TOWN_STATION_IDS.every((id) => next.visited.includes(id))
-    ) {
-      next = { ...next, stage: QUEST_STAGES.GO_TO_OFFICE };
-    } else if (
-      next.stage === QUEST_STAGES.OFFICE_STATIONS &&
-      OFFICE_STATION_IDS.every((id) => next.visited.includes(id))
-    ) {
-      next = { ...next, stage: QUEST_STAGES.RETURN_TO_OLIVE };
+    } else {
+      // Auto-advance when all zone NPCs are visited
+      const townOrder = next.pillarOrder?.town || TOWN_STATION_IDS;
+      const officeOrder = next.pillarOrder?.office || OFFICE_STATION_IDS;
+
+      if (next.stage === QUEST_STAGES.TOWN_PILLARS && townOrder.every((id) => next.visited.includes(id))) {
+        next = { ...next, stage: QUEST_STAGES.GO_TO_OFFICE };
+      } else if (next.stage === QUEST_STAGES.OFFICE_PILLARS && officeOrder.every((id) => next.visited.includes(id))) {
+        next = { ...next, stage: QUEST_STAGES.RETURN_TO_OLIVE };
+      }
     }
 
     return syncStatus(next);
@@ -210,6 +232,9 @@ export function useGameState() {
       choices: firstStep.choices,
       reaction: dialogData.reaction,
       advanceTo: dialogData.advanceTo || null,
+      pillarNpcId: dialogData.pillarNpcId || null,
+      adaptiveGapStep: dialogData.adaptiveGapStep || null,
+      adaptiveFollowupShown: false,
     });
   }
 
@@ -237,19 +262,6 @@ export function useGameState() {
       history: [],
       message,
       advanceTo,
-    });
-  }
-
-  function openReflectionDialog(npc, dialogData) {
-    setDialog({
-      type: "reflection",
-      phase: "reflection",
-      npcId: npc.id,
-      npcName: dialogData.title || npc.name,
-      npcRole: dialogData.role || npc.role,
-      message: dialogData.intro,
-      prompts: dialogData.prompts,
-      initialValues: quest.reflections,
     });
   }
 
@@ -282,11 +294,17 @@ export function useGameState() {
         ],
       };
 
+      // ── Opening dilemma: derive pillar order from choice ──────────────────
+      if (current.stepId === "opening_dilemma") {
+        next.pillarOrder = derivePillarOrder(choice.key);
+      }
+
       if (current.type === "sequence") {
         const nextStepIndex = current.stepIndex + 1;
         const nextStep = current.steps[nextStepIndex];
 
         if (nextStep) {
+          // Move to next step in sequence
           setDialog({
             ...current,
             history,
@@ -298,7 +316,32 @@ export function useGameState() {
           return next;
         }
 
-        const advanced = applyQuestAdvance(next, current.advanceTo, current.npcId);
+        // ── Sequence complete: check adaptive follow-up for pillar NPCs ─────
+        const pillarId = current.pillarNpcId;
+        if (pillarId && !current.adaptiveFollowupShown && current.adaptiveGapStep) {
+          const prefix = PILLAR_STEP_PREFIXES[pillarId];
+          const allChoices = next.choices;
+          const personalChoice = allChoices.find((c) => c.stepId === `${prefix}_scenario_personal`);
+          const delawareChoice = allChoices.find((c) => c.stepId === `${prefix}_scenario_delaware`);
+
+          if (personalChoice && delawareChoice && personalChoice.choiceKey !== delawareChoice.choiceKey) {
+            // Gap found — show adaptive follow-up
+            const adaptiveStep = current.adaptiveGapStep;
+            setDialog({
+              ...current,
+              history,
+              stepIndex: nextStepIndex,
+              stepId: adaptiveStep.id,
+              message: adaptiveStep.message,
+              choices: adaptiveStep.choices,
+              adaptiveFollowupShown: true,
+            });
+            return next;
+          }
+        }
+
+        // No adaptive follow-up (or already shown) — complete the sequence
+        const advanced = applyQuestAdvance(next, current.advanceTo, current.npcId, pillarId);
         setDialog({
           type: "reaction",
           phase: "reaction",
@@ -311,6 +354,7 @@ export function useGameState() {
         return advanced;
       }
 
+      // ── Single question ────────────────────────────────────────────────────
       const advanced = applyQuestAdvance(next, current.advanceTo || null, current.npcId);
       setDialog({
         type: "reaction",
@@ -319,7 +363,7 @@ export function useGameState() {
         npcName: current.npcName,
         npcRole: current.npcRole,
         history,
-        reaction: choice.reaction,
+        reaction: choice.reaction || "...",
       });
       return advanced;
     });
@@ -348,9 +392,10 @@ export function useGameState() {
     }
   }
 
+  // Kept for backward compatibility — not called in the new Delaware flow.
   function handleReflectionSubmit(values) {
     dismissDialog();
-    setQuest((prev) => syncStatus({ ...prev, reflections: values, stage: QUEST_STAGES.ROWAN_FINAL }));
+    setQuest((prev) => syncStatus({ ...prev, reflections: values, stage: QUEST_STAGES.POST_GAME }));
   }
 
   function handleNpcInteraction(npc) {
@@ -368,8 +413,17 @@ export function useGameState() {
     }
 
     if (dialogData.type === "reflection") {
-      openReflectionDialog(npc, dialogData);
-      setQuest((prev) => syncStatus({ ...prev, stage: QUEST_STAGES.COUNCIL_REFLECTION }));
+      // Legacy — kept for safety
+      setDialog({
+        type: "reflection",
+        phase: "reflection",
+        npcId: npc.id,
+        npcName: dialogData.title || npc.name,
+        npcRole: dialogData.role || npc.role,
+        message: dialogData.intro,
+        prompts: dialogData.prompts || [],
+        initialValues: quest.reflections,
+      });
       return;
     }
 
@@ -381,7 +435,7 @@ export function useGameState() {
     setPlayer((prev) => ({ ...prev, x: 3, y: 14, dir: "right" }));
     setQuest((prev) => {
       const next =
-        prev.stage === QUEST_STAGES.GO_TO_OFFICE ? { ...prev, stage: QUEST_STAGES.OFFICE_STATIONS } : prev;
+        prev.stage === QUEST_STAGES.GO_TO_OFFICE ? { ...prev, stage: QUEST_STAGES.OFFICE_PILLARS } : prev;
       flashBanner("New objective", getTaskLabel(next));
       return syncStatus(next);
     });
@@ -395,6 +449,15 @@ export function useGameState() {
     dismissDialog();
   }
 
+  // Auto-open council meeting when stage reaches POST_GAME
+  useEffect(() => {
+    if (quest.stage !== QUEST_STAGES.POST_GAME) return;
+    if (councilOpen) return;
+    setCouncilOpen(true);
+    dismissDialog(); // clear any lingering scripted dialog
+  }, [quest.stage]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-open report when game is complete
   useEffect(() => {
     if (quest.stage !== QUEST_STAGES.COMPLETE) return;
     if (dialogRef.current) return;
@@ -402,17 +465,16 @@ export function useGameState() {
 
     resultsAutoOpenedRef.current = true;
     setReportOpen(true);
-    flashBanner("Report ready", "Your ESG profile and answer summary are ready.", 2600);
+    flashBanner("Report ready", "Your Delaware sustainability report is ready.", 2600);
   }, [quest.stage, dialog]);
 
+  // Move all NPCs to council positions for the final stages
   useEffect(() => {
     if (
       quest.stage === QUEST_STAGES.RETURN_TO_OLIVE ||
-      quest.stage === QUEST_STAGES.COUNCIL_REFLECTION ||
-      quest.stage === QUEST_STAGES.ROWAN_FINAL ||
+      quest.stage === QUEST_STAGES.POST_GAME ||
       quest.stage === QUEST_STAGES.COMPLETE
     ) {
-      // Pull office NPCs before the state update so they're available in the closure.
       const offNpcs = officeNpcsRef.current;
       const suzy  = offNpcs.find((n) => n.id === "suzy")  || OFFICE_NPCS_START[0];
       const daisy = offNpcs.find((n) => n.id === "daisy") || OFFICE_NPCS_START[1];
@@ -425,8 +487,6 @@ export function useGameState() {
         const otis  = prev.find((npc) => npc.id === "otis")  || TOWN_NPCS_START[2];
         const rowan = prev.find((npc) => npc.id === "rowan") || rowanSrc;
 
-        // All 7 council members seated around the oval table (x=42-45, y=9-11).
-        // Chairs face inward toward the table centre.
         return [
           { ...olive, x: 43, y:  8, dir: "down",  stationary: true, step: 0 },
           { ...frank, x: 40, y:  8, dir: "down",  stationary: true, step: 0 },
@@ -440,6 +500,7 @@ export function useGameState() {
     }
   }, [quest.stage]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Flash banner when the objective changes
   useEffect(() => {
     const key = `${quest.stage}:${objectiveLabel}`;
     if (lastObjectiveKeyRef.current === key) return;
@@ -448,35 +509,33 @@ export function useGameState() {
     flashBanner("New objective", getTaskLabel(quest));
   }, [objectiveLabel, quest]);
 
+  // Persist progress to localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
-
     const savedProgress = {
       updatedAt: new Date().toISOString(),
       stage: quest.stage,
       choices: quest.choices,
       reflections: quest.reflections,
+      playerProfile: quest.playerProfile,
     };
-
     try {
       window.localStorage.setItem("pixel-gap-answer-cache", JSON.stringify(savedProgress));
-    } catch {
-      // Ignore storage issues so gameplay never breaks.
-    }
-  }, [quest.choices, quest.reflections, quest.stage]);
+    } catch { /* ignore */ }
+  }, [quest.choices, quest.reflections, quest.stage, quest.playerProfile]);
 
+  // Persist final report
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (quest.stage !== QUEST_STAGES.COMPLETE) return;
-
     try {
       window.localStorage.setItem("pixel-gap-latest-report", JSON.stringify(resultsReport));
-    } catch {
-      // Ignore storage issues so the ending still works without persistence.
-    }
+    } catch { /* ignore */ }
   }, [quest.stage, resultsReport]);
 
+  // Auto-trigger NPC interaction when player is adjacent to objective
   useEffect(() => {
+    if (councilOpen) return;                          // council meeting handles POST_GAME interaction
     if (!objectiveTarget || (objectiveTarget.scene && objectiveTarget.scene !== scene)) return;
     if (dialogRef.current) return;
     if (!AUTO_TRIGGERABLE_STAGES.has(quest.stage)) return;
@@ -487,7 +546,7 @@ export function useGameState() {
     if (lastAutoTriggerRef.current === targetKey) return;
     lastAutoTriggerRef.current = targetKey;
 
-    // Council seat — player walks onto their chair to open the reflection dialog.
+    // Council seat — player walks to chair, triggers Olive's council sequence
     if (objectiveTarget.id === "councilSeat") {
       const oliveNpc = currentNpcs.find((n) => n.id === "olive");
       if (oliveNpc) handleNpcInteraction(oliveNpc);
@@ -497,16 +556,16 @@ export function useGameState() {
     const npcMatch = currentNpcs.find((npc) => npc.id === objectiveTarget.id);
     if (npcMatch) {
       handleNpcInteraction(npcMatch);
-      return;
     }
+  }, [councilOpen, currentNpcs, objectiveTarget, player, quest.stage, scene]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  }, [currentNpcs, objectiveTarget, player, quest.stage, scene]); // eslint-disable-line react-hooks/exhaustive-deps
-
+  // Player movement loop
   useEffect(() => {
     const sceneData = SCENES[scene];
 
     function tryMove(dx, dy, dir) {
       if (reportOpen) return;
+      if (councilOpen) return;
       if (dialogRef.current?.phase === "question" || dialogRef.current?.phase === "reflection") return;
 
       setPlayer((prev) => {
@@ -518,7 +577,7 @@ export function useGameState() {
         const next = { ...prev, x: nx, y: ny, dir, step: prev.step ^ 1 };
 
         if (scene === "town" && nx === TOWN_OFFICE_ENTRY.x && ny === TOWN_OFFICE_ENTRY.y) {
-          if (quest.stage === QUEST_STAGES.GO_TO_OFFICE || quest.stage === QUEST_STAGES.OFFICE_STATIONS) {
+          if (quest.stage === QUEST_STAGES.GO_TO_OFFICE || quest.stage === QUEST_STAGES.OFFICE_PILLARS) {
             window.setTimeout(() => enterOffice(), 0);
           }
         }
@@ -526,8 +585,7 @@ export function useGameState() {
         if (scene === "office" && nx === OFFICE_EXIT_TILE.x && ny === OFFICE_EXIT_TILE.y) {
           if (
             quest.stage === QUEST_STAGES.RETURN_TO_OLIVE ||
-            quest.stage === QUEST_STAGES.COUNCIL_REFLECTION ||
-            quest.stage === QUEST_STAGES.ROWAN_FINAL ||
+            quest.stage === QUEST_STAGES.POST_GAME ||
             quest.stage === QUEST_STAGES.COMPLETE
           ) {
             window.setTimeout(() => exitOffice(), 0);
@@ -539,6 +597,10 @@ export function useGameState() {
     }
 
     function onKeyDown(e) {
+      // Don't intercept keys while the user is typing in a form field.
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
       const valid = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d", "W", "A", "S", "D", " "];
       if (valid.includes(e.key)) e.preventDefault();
       keysRef.current[e.key] = true;
@@ -570,19 +632,10 @@ export function useGameState() {
       if (now - lastMove < PLAYER_MOVE_MS) return;
       const k = keysRef.current;
 
-      if (k.ArrowUp || k.w || k.W) {
-        tryMove(0, -1, "up");
-        lastMove = now;
-      } else if (k.ArrowDown || k.s || k.S) {
-        tryMove(0, 1, "down");
-        lastMove = now;
-      } else if (k.ArrowLeft || k.a || k.A) {
-        tryMove(-1, 0, "left");
-        lastMove = now;
-      } else if (k.ArrowRight || k.d || k.D) {
-        tryMove(1, 0, "right");
-        lastMove = now;
-      }
+      if (k.ArrowUp || k.w || k.W) { tryMove(0, -1, "up"); lastMove = now; }
+      else if (k.ArrowDown || k.s || k.S) { tryMove(0, 1, "down"); lastMove = now; }
+      else if (k.ArrowLeft || k.a || k.A) { tryMove(-1, 0, "left"); lastMove = now; }
+      else if (k.ArrowRight || k.d || k.D) { tryMove(1, 0, "right"); lastMove = now; }
     }, 20);
 
     return () => {
@@ -590,8 +643,9 @@ export function useGameState() {
       window.removeEventListener("keyup", onKeyUp);
       window.clearInterval(loop);
     };
-  }, [currentNpcs, quest, reportOpen, scene]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [councilOpen, currentNpcs, quest, reportOpen, scene]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // NPC movement loop
   useEffect(() => {
     const loop = window.setInterval(() => {
       const mover = (setter, key) =>
@@ -635,5 +689,8 @@ export function useGameState() {
     handleReflectionSubmit,
     closeResultsReport,
     openResultsReport,
+    setPlayerProfile,
+    councilOpen,
+    closeCouncil,
   };
 }

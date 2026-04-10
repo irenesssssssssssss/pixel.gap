@@ -1,5 +1,4 @@
-// All static map data for the town scene.
-// The outdoor route is a mostly straight guided walk up the center spine.
+
 
 import { addRect, makePond, keyFor, line, isInSet } from "../engine/mapUtils";
 
@@ -13,7 +12,7 @@ export const townWater = new Set();
   ...makePond(41, 25, 6, 5, [{ x: 46, y: 25, w: 1, h: 1 }]),
 ].forEach((k) => townWater.add(k));
 
-// ─── Paths ────────────────────────────────────────────────────────────────────
+// ─── Paths ───────
 export const townPaths = new Set();
 [
   ...line(22, 4, 22, 33), ...line(23, 4, 23, 33), ...line(24, 4, 24, 33),
@@ -23,7 +22,7 @@ export const townPaths = new Set();
   ...line(27, 8, 40, 8), ...line(27, 9, 40, 9), ...line(27, 10, 40, 10),
 ].forEach((p) => townPaths.add(keyFor(p.x, p.y)));
 
-// ─── Ground-type zones ────────────────────────────────────────────────────────
+// ─── Ground-type zones
 export const townDirt = new Set();
 addRect(townDirt, 15, 22, 18, 9);
 addRect(townDirt, 27, 11, 10, 6);
@@ -42,19 +41,19 @@ export const townCropCells = new Set();
 addRect(townCropCells, 15, 26, 5, 2);
 addRect(townCropCells, 15, 29, 5, 2);
 
-// ─── Decorative objects ───────────────────────────────────────────────────────
+// ─── Decorative objects
 export const townFlowers = [
   // Original placements
   { x: 30, y: 30 }, { x: 32, y: 24 },
   { x: 18, y: 22 }, { x: 20, y: 20 }, { x: 33, y: 12 }, { x: 35, y: 11 },
   { x: 39, y: 11 }, { x: 41, y: 9 }, { x: 44, y: 9 }, { x: 8, y: 18 },
   { x: 12, y: 17 }, { x: 36, y: 24 }, { x: 43, y: 24 }, { x: 47, y: 28 },
-  // Autumn zone — south-west meadow
+  // Autumn zone 
   { x: 3, y: 22 }, { x: 5, y: 25 }, { x: 2, y: 28 }, { x: 7, y: 31 }, { x: 10, y: 33 },
   { x: 13, y: 31 }, { x: 11, y: 28 },
-  // Sand zone — near water edge
+  // Sand zone 
   { x: 5, y: 16 }, { x: 2, y: 21 },
-  // North-east dark grass — open parkland
+  // North-east dark grass 
   { x: 38, y: 16 }, { x: 42, y: 20 }, { x: 48, y: 19 }, { x: 46, y: 15 },
   // Near lodge fencing
   { x: 35, y: 29 }, { x: 37, y: 32 },
@@ -76,7 +75,6 @@ export const townLamps = [
 export const townCrates = [
   { x: 30, y: 12, color: "#9b6d43" }, { x: 31, y: 12, color: "#b07d50" },
   { x: 32, y: 12, color: "#8e5f36" },
-  // { x: 41, y: 11 } removed — now inside council terrace
 ];
 
 export const townCanalPosts = [
@@ -93,12 +91,12 @@ export const townSigns = [
   { x: 17, y: 19, text: "river" },
   { x: 30, y: 15, text: "works" },
   { x: 30, y: 10, text: "Delaware" },
-  { x: 39, y: 14, text: "terrace" }, // moved to south entrance of expanded terrace
+  { x: 39, y: 14, text: "terrace" }, 
 ];
 
 export const townBenches = [
   { x: 18, y: 18 },
-  // { x: 38, y: 8 }, { x: 42, y: 8 } removed — now inside council terrace
+  // { x: 38, y: 8 }, { x: 42, y: 8 } removed 
   // Extra benches — autumn meadow rest spots
   { x: 6, y: 26 }, { x: 11, y: 30 },
   // Overlooking the pond
@@ -106,7 +104,7 @@ export const townBenches = [
 ];
 
 export const townBarrels = [
-  // Barrels relocated from terrace — now in the works area
+  // Barrels relocated from terrace 
   { x: 30, y: 17, color: "#2f6db3" },
   { x: 31, y: 17, color: "#9acd32" },
   { x: 30, y: 18, color: "#8b5a2b" },
@@ -123,7 +121,7 @@ export const townFences = [
   ...line(14, 31, 20, 31), ...line(29, 31, 34, 31),
   ...line(14, 26, 14, 30), ...line(34, 26, 34, 30),
   ...line(28, 11, 36, 11), ...line(28, 16, 36, 16), ...line(36, 11, 36, 16),
-  // Council terrace — expanded 3-sided enclosure (open on west for entry via east path)
+  // Council terrace — expanded 3-sided enclosure 
   ...line(37, 7, 47, 7), ...line(37, 14, 47, 14), ...line(47, 7, 47, 14),
 ];
 
@@ -197,7 +195,7 @@ export const townMachines = [
   { x: 30, y: 13 },
 ];
 
-// ─── Trees (generated clusters around the route) ─────────────────────────────
+// ─── Trees 
 function makeTownTrees() {
   return [
     // Autumn-zone cluster — south-west

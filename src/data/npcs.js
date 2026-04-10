@@ -1,11 +1,27 @@
-// NPC definitions, quest content, and gameplay helpers.
-// This file stays data-only so the hook can drive the story without JSX.
+// NPC definitions, quest content, and gameplay helpers for the Delaware sustainability experience.
+
+const SCALE_CHOICES = [
+  { key: "1", label: "1 — rarely or never" },
+  { key: "2", label: "2 — occasionally" },
+  { key: "3", label: "3 — sometimes" },
+  { key: "4", label: "4 — fairly often" },
+  { key: "5", label: "5 — consistently" },
+];
+
+const PILLAR_CHOICES = [
+  { key: "env", label: "Environmental Stewardship" },
+  { key: "people", label: "People & Culture" },
+  { key: "conduct", label: "Business Conduct" },
+  { key: "chain", label: "Responsible Value Chain" },
+];
+
+// ─── NPC ROSTER ─────────────────────────────────────────────────────────────
 
 export const TOWN_NPCS_START = [
   {
     id: "olive",
     name: "Olive the Owl",
-    role: "Site Insight Lead",
+    role: "Sustainability Guide",
     x: 24, y: 28,
     dir: "down",
     stationary: true,
@@ -16,7 +32,7 @@ export const TOWN_NPCS_START = [
   {
     id: "frank",
     name: "Frank the Fish",
-    role: "Environmental Risk & Escalation",
+    role: "Environmental Stewardship",
     x: 23, y: 18,
     dir: "right",
     stationary: true,
@@ -27,7 +43,7 @@ export const TOWN_NPCS_START = [
   {
     id: "otis",
     name: "Otis the Otter",
-    role: "Maintenance & Operations",
+    role: "People & Culture",
     x: 28, y: 13,
     dir: "down",
     stationary: true,
@@ -41,7 +57,7 @@ export const OFFICE_NPCS_START = [
   {
     id: "suzy",
     name: "Suzy the Sheep",
-    role: "Fairness, Allocation & Support",
+    role: "Business Conduct",
     x: 6, y: 13,
     dir: "right",
     stationary: true,
@@ -52,10 +68,10 @@ export const OFFICE_NPCS_START = [
   {
     id: "daisy",
     name: "Daisy the Deer",
-    role: "Workload & Psychological Safety",
+    role: "People & Culture",
     x: 11, y: 9,
     dir: "right",
-    stationary: true,
+    stationary: false,
     species: "deer",
     patrol: { x1: 9, y1: 8, x2: 13, y2: 11 },
     councilPatrol: { x1: 41, y1: 10, x2: 45, y2: 13 },
@@ -63,7 +79,7 @@ export const OFFICE_NPCS_START = [
   {
     id: "hazel",
     name: "Hazel the Hedgehog",
-    role: "Records, Compliance & Feedback",
+    role: "Responsible Value Chain",
     x: 18, y: 8,
     dir: "right",
     stationary: true,
@@ -74,7 +90,7 @@ export const OFFICE_NPCS_START = [
   {
     id: "rowan",
     name: "Rowan the Hare",
-    role: "Leadership Credibility & Governance",
+    role: "Post-Reflection",
     x: 20, y: 8,
     dir: "left",
     stationary: true,
@@ -84,424 +100,494 @@ export const OFFICE_NPCS_START = [
   },
 ];
 
-export const INSPECTABLES = [
-  {
-    id: "arrivalWaste",
-    scene: "town",
-    x: 27,
-    y: 24,
-    label: "overflowing waste point",
-    text:
-      "Overflowing bags lean against the waste point. Nobody has left a note, but the backlog is visible before anyone says a word.",
-  },
-  {
-    id: "arrivalSign",
-    scene: "town",
-    x: 19,
-    y: 24,
-    label: "faded community sign",
-    text:
-      "The community board is sun-bleached and out of date. Old updates remain pinned long after their usefulness has passed.",
-  },
-  {
-    id: "arrivalLight",
-    scene: "town",
-    x: 24,
-    y: 20,
-    label: "broken path light",
-    text:
-      "The path light hums but barely holds a glow. People still walk here, which means the risk is being absorbed into routine.",
-  },
-  {
-    id: "arrivalWatch",
-    scene: "town",
-    x: 20,
-    y: 24,
-    label: "empty safety watch post",
-    text:
-      "The safety watch post is empty. The chair is tucked in neatly, which somehow makes the absence feel even more normalised.",
-  },
-  {
-    id: "frankTask",
-    scene: "town",
-    x: 21,
-    y: 18,
-    label: "river marker",
-    text:
-      "You clear reeds away from the monitoring edge and uncover the marker line. The latest mark sits above the safe band after the last heavy rain.",
-  },
-  {
-    id: "otisTask",
-    scene: "town",
-    x: 30,
-    y: 13,
-    label: "noisy machine",
-    text:
-      "You stop beside the machine and inspect it properly. It rattles harder than it should and throws off too much heat for a routine day.",
-  },
-  {
-    id: "suzyTask",
-    scene: "office",
-    x: 6,
-    y: 13,
-    label: "training kits",
-    text:
-      "You sort the remaining training kits, protective gear, and support packs. There are only enough complete sets for two groups.",
-  },
-  {
-    id: "daisyTask",
-    scene: "office",
-    x: 11,
-    y: 9,
-    label: "reporting pile",
-    text:
-      "You help Daisy carry folders and boxes between teams. The labels show the same names appearing again and again on the urgent work.",
-  },
-  {
-    id: "hazelTask",
-    scene: "office",
-    x: 17,
-    y: 8,
-    label: "archive stack",
-    text:
-      "You sort incident notes, staff comments, supplier complaints, and meeting summaries into rough piles. The difficult items are easy to spot and easy to postpone.",
-  },
-];
-
-const OLIVE_DEBRIEF_STEPS = [
-  {
-    id: "olive_signal",
-    message:
-      "Olive the Owl — Site Insight Lead\n\n\"alright. now you've seen a few corners. what stood out first?\"",
-    choices: [
-      { key: "waste", label: "the overflowing waste and mess. basics are slipping." },
-      { key: "signs", label: "the outdated signs. communication looks neglected." },
-      { key: "attention", label: "the empty watch point and broken light. it feels like attention is missing." },
-    ],
-  },
-  {
-    id: "olive_read",
-    message:
-      "\"and based on that, what's your read of the place?\"",
-    choices: [
-      { key: "care", label: "people seem to care, but the basics are getting away from them." },
-      { key: "distance", label: "it looks alright from a distance, but up close it feels unstable." },
-      { key: "visibleRisk", label: "the risks already feel visible. they're just not being named clearly." },
-    ],
-  },
-  {
-    id: "olive_fix",
-    message:
-      "\"if this place could fix one thing first, where would you start?\"",
-    choices: [
-      { key: "action", label: "visible action on day-to-day problems." },
-      { key: "communication", label: "clearer communication with staff and community." },
-      { key: "transparency", label: "better transparency on what leadership actually knows." },
-    ],
-  },
-  {
-    id: "olive_confidence",
-    message:
-      "\"last one. how confident are you that leadership sees what people on the ground are seeing?\"",
-    choices: [
-      { key: "confident", label: "fairly confident." },
-      { key: "unsure", label: "somewhat unsure." },
-      { key: "notConfident", label: "not confident at all." },
-    ],
-  },
-];
-
-export const STATION_DIALOGS = {
-  frank: {
-    taskId: "frankTask",
-    intro:
-      "Frank the Fish — Environmental Risk & Escalation\n\n\"see that line? after heavy rain it keeps creeping above the safe mark.\"\n\nPlayer\n\"has it been reported?\"\n\nFrank\n\"three times. each time the answer was the same: wait for the full report, don't overreact.\"\n\nPlayer\n\"and what do the people working down here think?\"\n\nFrank\n\"they think waiting is how small problems become expensive ones.\"\n\n\"if you were sitting in that discussion, what would you push for first?\"",
-    choices: [
-      {
-        key: "actionFirst",
-        label: "put temporary protections in place now and investigate in parallel.",
-        reaction: "that's what the grounds crew keeps saying. act early, correct later if needed.",
-      },
-      {
-        key: "transparent",
-        label: "share the readings openly so staff and nearby community understand the risk.",
-        reaction: "at least then nobody can say they were kept in the dark.",
-      },
-      {
-        key: "wait",
-        label: "wait for confirmed reporting before taking action.",
-        reaction: "some would call that disciplined. others would call it how problems get buried.",
-      },
-    ],
-    visitedMessage:
-      "Frank watches the river and the reporting chain at the same time. Neither feels fully reliable.",
-  },
-  otis: {
-    taskId: "otisTask",
-    intro:
-      "Otis the Otter — Maintenance & Operations\n\n\"hear that? this unit has been running inefficiently for months.\"\n\nPlayer\n\"can't it just be replaced?\"\n\nOtis\n\"it can. and every report says it should be. lower energy use, fewer breakdowns, safer too.\"\n\nPlayer\n\"so why hasn't it happened?\"\n\nOtis\n\"because quarter-end delivery targets are louder than maintenance requests.\"\n\n\"what would actually convince you leadership cares about a problem like this?\"",
-    choices: [
-      {
-        key: "visibleChange",
-        label: "visible operational changes, not just promises.",
-        reaction: "same here. people believe the repair they can hear and see, not the promise on a slide.",
-      },
-      {
-        key: "trackedTarget",
-        label: "a public target with a date, owner, and progress tracking.",
-        reaction: "that's the kind of commitment that survives a busy month.",
-      },
-      {
-        key: "strategyDoc",
-        label: "a detailed strategy document that shows they've thought it through.",
-        reaction: "planning matters, but around here the machine is still louder than the plan.",
-      },
-    ],
-    visitedMessage:
-      "Otis keeps the site running, which means he notices quickly when commitment stays rhetorical.",
-  },
-  suzy: {
-    taskId: "suzyTask",
-    intro:
-      "Suzy the Sheep — Fairness, Allocation & Support\n\n\"i hate this kind of problem. everyone agrees training matters until there aren't enough places to go around.\"\n\nPlayer\n\"who decides?\"\n\nSuzy\n\"officially? leadership. in practice? whoever makes the strongest case in time.\"\n\nPlayer\n\"and who gets missed most often?\"\n\nSuzy\n\"usually the people least visible.\"\n\n\"if you had to guide the decision, what principle would you use?\"",
-    choices: [
-      {
-        key: "equity",
-        label: "prioritize the groups carrying the most risk or load.",
-        reaction: "that tends to feel fairest to the people with the most to lose, even when it's uneven on paper.",
-      },
-      {
-        key: "equal",
-        label: "split access as evenly as possible.",
-        reaction: "clean logic, though equal slices can still leave the highest-risk gaps untouched.",
-      },
-      {
-        key: "negotiate",
-        label: "bring the groups together and make them negotiate a shared solution.",
-        reaction: "useful if trust is high. harder when the least visible group also has the least leverage.",
-      },
-    ],
-    visitedMessage:
-      "Suzy measures fairness by who still gets protected when resources stop being plentiful.",
-  },
-  daisy: {
-    taskId: "daisyTask",
-    intro:
-      "Daisy the Deer — Workload & Psychological Safety\n\n\"thanks. this is the third time today i've carried someone else's reporting back upstairs.\"\n\nPlayer\n\"is this your job?\"\n\nDaisy\n\"officially? partly. unofficially? whenever something urgent or messy appears, it lands with the same people.\"\n\nPlayer\n\"does leadership know?\"\n\nDaisy\n\"they see the polished outputs. not always the extra labor behind them.\"\n\n\"what would you do if you saw one team carrying more than their share and nobody was saying it out loud?\"",
-    choices: [
-      {
-        key: "raiseNow",
-        label: "raise it now. imbalance gets harder to fix the longer it stays invisible.",
-        reaction: "that's the brave version. early honesty can feel awkward, but it prevents quiet burnout.",
-      },
-      {
-        key: "raiseCarefully",
-        label: "wait and raise it carefully when the timing is right.",
-        reaction: "sometimes that's how people protect themselves. the risk is that the pattern gets normalised first.",
-      },
-      {
-        key: "leaveToLeadership",
-        label: "leave it for leadership to notice through the normal process.",
-        reaction: "i wish that worked more often. hidden workload is good at staying hidden.",
-      },
-    ],
-    visitedMessage:
-      "Daisy notices the unpaid labor behind polished reporting, and how often it goes unnamed.",
-  },
-  hazel: {
-    taskId: "hazelTask",
-    intro:
-      "Hazel the Hedgehog — Records, Compliance & Feedback\n\n\"everyone says they want honesty. what they usually want is honesty after it's been cleaned up.\"\n\nPlayer\n\"what kind of things come through here?\"\n\nHazel\n\"incident logs, anonymous concerns, supplier issues, near-misses, community complaints. all useful. all inconvenient in different ways.\"\n\nPlayer\n\"and what happens to them?\"\n\nHazel\n\"depends who wrote them, who reads them, and whether the timing is politically awkward.\"\n\n\"when uncomfortable feedback reaches leadership, what usually happens?\"",
-    choices: [
-      {
-        key: "traceable",
-        label: "it shapes decisions and you can trace the effect.",
-        reaction: "when that happens, people stop treating feedback as theatre.",
-      },
-      {
-        key: "parked",
-        label: "it gets acknowledged, then quietly parked.",
-        reaction: "that's the pattern people fear most: heard just enough to disappear.",
-      },
-      {
-        key: "influence",
-        label: "it depends on who is speaking and who has influence.",
-        reaction: "politics has a way of editing the record before the record can speak for itself.",
-      },
-    ],
-    visitedMessage:
-      "Hazel keeps the paper trail, which means she sees exactly where honesty starts getting filtered.",
-  },
-  rowan: {
-    intro:
-      "Rowan the Hare — Governance & Strategy\n\n\"people forgive setbacks more easily than they forgive performance. what they remember is whether leaders were real with them.\"\n\nPlayer\n\"so what counts as real?\"\n\nRowan\n\"that's exactly my question.\"\n\n\"when targets, pressure, and reality all pull in different directions, what makes a leader credible to you?\"",
-    choices: [
-      {
-        key: "followThrough",
-        label: "consistent follow-through people can actually observe.",
-        reaction: "visible follow-through travels faster than any values statement. people trust what repeats.",
-      },
-      {
-        key: "direction",
-        label: "a clear long-term direction, even when execution is uneven.",
-        reaction: "direction matters, especially when the road gets messy. it only holds if people can still see the line.",
-      },
-      {
-        key: "signals",
-        label: "visible signals that show the organization is moving.",
-        reaction: "signals can help. the question is whether they point to substance or simply stand in for it.",
-      },
-    ],
-    visitedMessage:
-      "Rowan keeps coming back to the same standard: if people can't feel the follow-through, governance stays abstract.",
-  },
-};
-
-export const REFLECTION_PROMPTS = [
-  {
-    id: "followThroughStory",
-    speaker: "Olive",
-    prompt:
-      "tell me about a time leadership followed through on something in a way people could actually feel.",
-  },
-  {
-    id: "decisionDriver",
-    speaker: "Hazel",
-    prompt:
-      "when reports point in different directions, what tends to decide the outcome here: evidence, hierarchy, urgency, or optics?",
-  },
-  {
-    id: "anonymousMessage",
-    speaker: "Daisy",
-    prompt:
-      "if you could send one anonymous message directly to senior leadership, and they had to act on it, what would you say?",
-  },
-];
+// ─── QUEST STAGES ────────────────────────────────────────────────────────────
 
 export const QUEST_STAGES = {
   MEET_OLIVE: "meetOlive",
-  ARRIVAL_INSPECTION: "arrivalInspection",
-  OLIVE_DEBRIEF: "oliveDebrief",
-  TOWN_STATIONS: "townStations",
+  BASELINE_DILEMMA: "baselineDilemma",
+  TOWN_PILLARS: "townPillars",
   GO_TO_OFFICE: "goToOffice",
-  OFFICE_STATIONS: "officeStations",
+  OFFICE_PILLARS: "officePillars",
   RETURN_TO_OLIVE: "returnToOlive",
-  COUNCIL_REFLECTION: "councilReflection",
-  ROWAN_FINAL: "rowanFinal",
+  POST_GAME: "postGame",
   COMPLETE: "complete",
 };
 
-export const ARRIVAL_INSPECTION_IDS = ["arrivalWaste", "arrivalSign", "arrivalLight", "arrivalWatch"];
 export const TOWN_STATION_IDS = ["frank", "otis"];
-export const OFFICE_STATION_IDS = ["suzy", "daisy", "hazel"];
+export const OFFICE_STATION_IDS = ["suzy", "hazel"];
 
-export function getInspectableById(id) {
-  return INSPECTABLES.find((item) => item.id === id) || null;
-}
+// ─── OLIVE: BASELINE + OPENING DILEMMA ───────────────────────────────────────
 
-export function getActiveInspectables(quest, scene) {
-  return [];
-}
+const OLIVE_INTRO_STEPS = [
+  {
+    id: "baseline_understanding",
+    message:
+      "Olive the Owl — Sustainability Guide\n\n\"welcome. before we begin, i have three quick questions to understand where you're starting from.\"\n\n\"how well do you feel you currently understand Delaware's sustainability values?\"",
+    choices: [
+      { key: "1", label: "1 — i have little to no familiarity" },
+      { key: "2", label: "2 — i know a little, but not deeply" },
+      { key: "3", label: "3 — i have a moderate understanding" },
+      { key: "4", label: "4 — i understand them fairly well" },
+      { key: "5", label: "5 — i know them very well" },
+    ],
+  },
+  {
+    id: "baseline_relevance",
+    message: "\"and how relevant do Delaware's sustainability topics feel to your daily work?\"",
+    choices: [
+      { key: "1", label: "1 — not relevant at all" },
+      { key: "2", label: "2 — slightly relevant" },
+      { key: "3", label: "3 — somewhat relevant" },
+      { key: "4", label: "4 — fairly relevant" },
+      { key: "5", label: "5 — very relevant to what i do" },
+    ],
+  },
+  {
+    id: "baseline_confidence",
+    message: "\"how confident are you in spotting these values in real decisions and everyday work?\"",
+    choices: [
+      { key: "1", label: "1 — not confident at all" },
+      { key: "2", label: "2 — slightly confident" },
+      { key: "3", label: "3 — somewhat confident" },
+      { key: "4", label: "4 — fairly confident" },
+      { key: "5", label: "5 — very confident" },
+    ],
+  },
+  {
+    id: "opening_dilemma",
+    message:
+      "\"good. one more thing before you head out.\"\n\n\"imagine you're helping prepare an important project. one option moves faster but raises concerns in another area. another takes more effort but feels more responsible.\"\n\n\"in that moment, what matters most to you?\"",
+    choices: [
+      { key: "env", label: "reducing waste and minimising the environmental footprint of the work." },
+      { key: "people", label: "making sure the process is fair and the people involved feel genuinely supported." },
+      { key: "conduct", label: "following the most ethical and compliant path — even if it takes longer." },
+      { key: "chain", label: "thinking about how the decision affects partners, suppliers, and longer-term impact." },
+    ],
+  },
+];
+
+// ─── FINAL REFLECTION (Olive at council) ─────────────────────────────────────
+
+const FINAL_REFLECTION_STEPS = [
+  {
+    id: "final_strongest",
+    message:
+      "Olive the Owl — Council Circle\n\n\"you've walked through all four zones. now let's reflect before you leave.\"\n\n\"which pillar feels strongest in terms of how it shows up in daily practice at Delaware?\"",
+    choices: PILLAR_CHOICES,
+  },
+  {
+    id: "final_important",
+    message: "\"and which pillar matters most to you personally?\"",
+    choices: PILLAR_CHOICES,
+  },
+  {
+    id: "final_gap",
+    message: "\"where do you see the biggest gap between Delaware's sustainability ambition and what you experience in practice?\"",
+    choices: [
+      { key: "env", label: "the environmental side — intentions are there but daily operations don't always reflect it." },
+      { key: "people", label: "people and culture — wellbeing and inclusion feel less visible under pressure." },
+      { key: "conduct", label: "business conduct — compliance is followed but speaking up still feels uncertain." },
+      { key: "chain", label: "the value chain — external responsibility is discussed less than internal performance." },
+    ],
+  },
+  {
+    id: "final_focus",
+    message: "\"last one. what should Delaware prioritize to close that gap?\"",
+    choices: [
+      { key: "visible_action", label: "more visible action — less strategy, more tangible change people can see and feel." },
+      { key: "culture_safety", label: "a stronger speak-up culture where concerns actually reach the right people." },
+      { key: "leadership_model", label: "leadership modeling the values consistently — not just in formal settings." },
+      { key: "systems", label: "better systems and measurement to track real progress, not just intentions." },
+    ],
+  },
+];
+
+// ─── POST-GAME (Rowan) ───────────────────────────────────────────────────────
+
+const POST_GAME_STEPS = [
+  {
+    id: "postGame_understanding",
+    message:
+      "Rowan the Hare — Post-Reflection\n\n\"one last set of questions before you go. how well do you now feel you understand Delaware's sustainability values — compared to when you started?\"",
+    choices: [
+      { key: "1", label: "1 — not much clearer than before" },
+      { key: "2", label: "2 — slightly clearer" },
+      { key: "3", label: "3 — somewhat clearer" },
+      { key: "4", label: "4 — fairly clear now" },
+      { key: "5", label: "5 — much clearer than before" },
+    ],
+  },
+  {
+    id: "postGame_reflection",
+    message: "\"did this experience make you reflect differently on how these values show up in your own work?\"",
+    choices: [
+      { key: "yes", label: "yes — it gave me new ways to think about it." },
+      { key: "somewhat", label: "somewhat — it confirmed some things and challenged others." },
+      { key: "not_really", label: "not particularly — it matched what i already thought." },
+    ],
+  },
+  {
+    id: "postGame_learning",
+    message: "\"and how much do you feel you learned through this experience?\"",
+    choices: [
+      { key: "1", label: "1 — very little" },
+      { key: "2", label: "2 — a little" },
+      { key: "3", label: "3 — a moderate amount" },
+      { key: "4", label: "4 — quite a bit" },
+      { key: "5", label: "5 — a lot" },
+    ],
+  },
+];
+
+// ─── PILLAR NPC SEQUENCES ────────────────────────────────────────────────────
+
+const FRANK_PILLAR_STEPS = [
+  {
+    id: "env_scenario_personal",
+    message:
+      "Frank the Fish — Environmental Stewardship\n\n\"we've been monitoring this drainage channel. after the last heavy period, runoff from the site has increased. there are options: temporary containment now, or wait six weeks for the full environmental assessment.\"\n\nPlayer\n\"what's the risk of waiting?\"\n\nFrank\n\"the assessment takes six weeks. the runoff doesn't.\"\n\n\"if this were your call, what would you do?\"",
+    choices: [
+      { key: "act_now", label: "put temporary measures in place now and run the assessment in parallel." },
+      { key: "communicate", label: "flag the risk clearly to leadership and let them decide with full information." },
+      { key: "wait_process", label: "follow the proper process and wait for the assessment before acting." },
+      { key: "escalate", label: "escalate beyond normal channels — this needs to be treated as urgent." },
+    ],
+  },
+  {
+    id: "env_scenario_delaware",
+    message: "\"and what do you think Delaware leadership would prioritize in this situation?\"",
+    choices: [
+      { key: "act_now", label: "act now — take temporary measures while the assessment runs." },
+      { key: "communicate", label: "communicate the risk upward and let leadership decide." },
+      { key: "wait_process", label: "follow process and wait for the full assessment." },
+      { key: "escalate", label: "treat it as urgent and escalate beyond standard procedure." },
+    ],
+  },
+  {
+    id: "env_scale",
+    message: "\"last question from me. how often do you see environmental considerations genuinely shaping real decisions where you work?\"",
+    choices: SCALE_CHOICES,
+  },
+];
+
+const OTIS_PILLAR_STEPS = [
+  {
+    id: "people_scenario_personal",
+    message:
+      "Otis the Otter — People & Culture\n\n\"there's a team situation. project pressure is high, and one person has been quietly absorbing extra load for weeks. they haven't said anything officially — but it's visible to anyone paying attention.\"\n\nPlayer\n\"have they been offered support?\"\n\nOtis\n\"not formally. leadership is focused on the delivery deadline.\"\n\n\"what would you do?\"",
+    choices: [
+      { key: "raise_now", label: "raise it now. waiting makes the pattern harder to break." },
+      { key: "check_in", label: "check in privately with the person first, then decide how to raise it." },
+      { key: "let_lead", label: "leave it for the team lead or manager to notice through normal channels." },
+      { key: "document", label: "document what you're seeing and flag it after the immediate pressure passes." },
+    ],
+  },
+  {
+    id: "people_scenario_delaware",
+    message: "\"and what do you think Delaware would expect someone to do in this situation?\"",
+    choices: [
+      { key: "raise_now", label: "raise it now — don't wait." },
+      { key: "check_in", label: "check in privately first, then escalate if needed." },
+      { key: "let_lead", label: "leave it to the line manager to notice and handle." },
+      { key: "document", label: "document and flag after the immediate pressure passes." },
+    ],
+  },
+  {
+    id: "people_scale",
+    message: "\"one more. how safe does it feel to express a different view or raise a concern in your team?\"",
+    choices: SCALE_CHOICES,
+  },
+];
+
+const SUZY_PILLAR_STEPS = [
+  {
+    id: "conduct_scenario_personal",
+    message:
+      "Suzy the Sheep — Business Conduct\n\n\"a colleague shows you a workaround that saves three days of compliance checks. it's not against any written rule, but it bypasses the spirit of the process. other teams apparently do it regularly.\"\n\nPlayer\n\"is there any risk?\"\n\nSuzy\n\"not immediately. but if something goes wrong later, there's no paper trail for why it was skipped.\"\n\n\"what would you do?\"",
+    choices: [
+      { key: "follow_proper", label: "follow the full process. the shortcut isn't worth the downstream risk." },
+      { key: "flag_up", label: "flag the workaround to a manager before deciding — get clarity on whether it's acceptable." },
+      { key: "use_workaround", label: "use the workaround this time — it's common practice and the deadline matters." },
+      { key: "suggest_review", label: "use it now but suggest a formal review so it's either approved or fixed." },
+    ],
+  },
+  {
+    id: "conduct_scenario_delaware",
+    message: "\"what do you think Delaware's leadership would expect someone to do here?\"",
+    choices: [
+      { key: "follow_proper", label: "always follow the full process — no shortcuts." },
+      { key: "flag_up", label: "flag it and seek guidance before proceeding." },
+      { key: "use_workaround", label: "use common-practice workarounds if everyone else does it." },
+      { key: "suggest_review", label: "use it and raise a process review — pragmatic but constructive." },
+    ],
+  },
+  {
+    id: "conduct_scale",
+    message: "\"and how safe would it feel to raise a concern about a process or compliance issue in your context?\"",
+    choices: SCALE_CHOICES,
+  },
+];
+
+const HAZEL_PILLAR_STEPS = [
+  {
+    id: "chain_scenario_personal",
+    message:
+      "Hazel the Hedgehog — Responsible Value Chain\n\n\"there's a supplier decision on the table. the lower-cost option has weaker sustainability standards — their labour and environmental record is mixed. the responsible supplier costs 12% more and takes longer to onboard.\"\n\nPlayer\n\"is there pressure to go with the cheaper option?\"\n\nHazel\n\"there's always pressure. but the contract is long-term. whatever we choose, we're committed to it.\"\n\n\"what matters most to you in this decision?\"",
+    choices: [
+      { key: "responsible", label: "go with the responsible supplier. the cost difference is worth the alignment." },
+      { key: "negotiate", label: "try to negotiate the lower-cost supplier to improve their standards as a condition." },
+      { key: "cost", label: "go with the lower-cost option — the business case has to hold up." },
+      { key: "escalate", label: "escalate the trade-off to leadership — this is too significant to decide at this level." },
+    ],
+  },
+  {
+    id: "chain_scenario_delaware",
+    message: "\"what do you think Delaware would prioritize in a supplier decision like this?\"",
+    choices: [
+      { key: "responsible", label: "choose the responsible supplier even at higher cost." },
+      { key: "negotiate", label: "use procurement leverage to push suppliers to improve." },
+      { key: "cost", label: "prioritize the business case — sustainability is secondary here." },
+      { key: "escalate", label: "escalate significant trade-offs to senior leadership." },
+    ],
+  },
+  {
+    id: "chain_scale",
+    message: "\"last one. how visible is responsible external decision-making — around suppliers, partners, and longer-term impact — in your everyday work?\"",
+    choices: SCALE_CHOICES,
+  },
+];
+
+// ─── ADAPTIVE FOLLOW-UP STEPS ─────────────────────────────────────────────────
+
+const ADAPTIVE_GAP_STEPS = {
+  frank: {
+    id: "env_adaptive_gap",
+    message: "\"your own choice and what you think Delaware would do seem different. what do you think creates that gap?\"",
+    choices: [
+      { key: "priorities", label: "different priorities — what matters to individuals vs the organization." },
+      { key: "visibility", label: "a lack of visibility — leadership might not see what people on the ground do." },
+      { key: "incentives", label: "incentives aren't aligned — people are rewarded for other things." },
+      { key: "culture", label: "the culture makes it hard to act on what you believe is right." },
+    ],
+  },
+  otis: {
+    id: "people_adaptive_gap",
+    message: "\"there seems to be a gap between what you'd do and what you think Delaware would expect. what do you think creates it?\"",
+    choices: [
+      { key: "priorities", label: "different priorities — individual values vs organizational culture." },
+      { key: "visibility", label: "limited visibility upward — concerns don't always reach the people who can act." },
+      { key: "incentives", label: "short-term delivery pressure overrides longer-term people considerations." },
+      { key: "culture", label: "the culture doesn't consistently make it safe to step in for others." },
+    ],
+  },
+  suzy: {
+    id: "conduct_adaptive_gap",
+    message: "\"your personal response and what you think Delaware expects seem to differ. what do you think explains that?\"",
+    choices: [
+      { key: "priorities", label: "compliance culture in theory isn't always what's rewarded in practice." },
+      { key: "visibility", label: "leadership might not see the shortcuts that become routine at ground level." },
+      { key: "incentives", label: "delivery pressure makes the 'right' path feel like the slow path." },
+      { key: "culture", label: "speaking up about process feels risky in a hierarchical environment." },
+    ],
+  },
+  hazel: {
+    id: "chain_adaptive_gap",
+    message: "\"it looks like your own approach differs from what you'd expect Delaware to prioritize. what creates that gap, in your view?\"",
+    choices: [
+      { key: "priorities", label: "financial pressure overrides sustainability aspirations in practice." },
+      { key: "visibility", label: "supply chain decisions happen at too many levels for central values to reach." },
+      { key: "incentives", label: "procurement KPIs are still primarily cost and speed, not responsibility." },
+      { key: "culture", label: "sustainability in the value chain is discussed but not yet deeply embedded." },
+    ],
+  },
+};
+
+// ─── NPC REACTIONS ───────────────────────────────────────────────────────────
+
+const PILLAR_REACTIONS = {
+  frank: "\"good. the gap between environmental ambition and operational reality is exactly what we're here to understand.\"",
+  otis: "\"that's the kind of reflection that matters. people and culture gaps don't fix themselves.\"",
+  suzy: "\"appreciated. knowing where the line sits between policy and practice is exactly what this is about.\"",
+  hazel: "\"useful. the value chain is one of the hardest places to make sustainability concrete. your view helps.\"",
+};
+
+const PILLAR_VISITED_MESSAGES = {
+  frank:
+    "Frank the Fish — Environmental Stewardship\n\nFrank nods toward the drainage channel. \"the readings don't change just because we've already talked about them. but your view is in the record.\"",
+  otis:
+    "Otis the Otter — People & Culture\n\nOtis glances back at the building. \"people situations don't resolve neatly. thanks for engaging with it honestly.\"",
+  suzy:
+    "Suzy the Sheep — Business Conduct\n\nSuzy straightens a stack of folders. \"the conversation about process and shortcuts is never really finished. but we've made a start.\"",
+  hazel:
+    "Hazel the Hedgehog — Responsible Value Chain\n\nHazel tucks the supplier file away. \"the right supplier decision is rarely obvious. thanks for thinking it through.\"",
+};
+
+// ─── PILLAR STEP ID PREFIXES ─────────────────────────────────────────────────
+// Used in useGameState to detect personal vs Delaware choices for gap analysis.
+
+export const PILLAR_STEP_PREFIXES = {
+  frank: "env",
+  otis: "people",
+  suzy: "conduct",
+  hazel: "chain",
+};
+
+// ─── MAIN DIALOG GETTER ──────────────────────────────────────────────────────
 
 export function getNpcDialog(npcId, quest) {
+  // ── OLIVE ──────────────────────────────────────────────────────────────────
   if (npcId === "olive") {
     if (quest.stage === QUEST_STAGES.MEET_OLIVE) {
       return {
         type: "info",
         message:
-          "Olive the Owl — Site Insight Lead\n\n\"first days are useful. you still notice what the rest of us have learned to walk past.\"\n\nPlayer\n\"what am i looking for exactly?\"\n\nOlive\n\"nothing dramatic. just the small things. the places where reality shows through before the meeting slides do.\"",
-        advanceTo: QUEST_STAGES.OLIVE_DEBRIEF,
+          "Olive the Owl — Sustainability Guide\n\n\"welcome to Delaware's sustainability journey. this is a reflective experience — there are no right or wrong answers here.\"\n\nPlayer\n\"what am i doing exactly?\"\n\nOlive\n\"walking through four zones, meeting the guides, and sharing your honest perspective. your responses are anonymised and help Delaware understand what sustainability looks like in practice.\"",
+        advanceTo: QUEST_STAGES.BASELINE_DILEMMA,
       };
     }
 
-    if (quest.stage === QUEST_STAGES.OLIVE_DEBRIEF) {
+    if (quest.stage === QUEST_STAGES.BASELINE_DILEMMA) {
       return {
         type: "sequence",
-        steps: OLIVE_DEBRIEF_STEPS,
+        steps: OLIVE_INTRO_STEPS,
         reaction:
-          "first impressions matter because they're often the least rehearsed. now let's see whether the same signals show up at the stations people manage every day.",
-        advanceTo: QUEST_STAGES.TOWN_STATIONS,
+          "\"good. follow the path to the first zone and find your guide. there's no wrong direction — just an honest one.\"",
+        advanceTo: QUEST_STAGES.TOWN_PILLARS,
       };
     }
 
-    if (quest.stage === QUEST_STAGES.RETURN_TO_OLIVE || quest.stage === QUEST_STAGES.COUNCIL_REFLECTION) {
+    if (quest.stage === QUEST_STAGES.RETURN_TO_OLIVE) {
       return {
-        type: "reflection",
-        title: "Council Gathering",
-        role: "End-of-day reflection",
-        intro:
-          "Olive\n\"you've seen enough to know that this place isn't just what it says in reports. before the day ends, say it plainly.\"",
-        prompts: REFLECTION_PROMPTS,
+        type: "sequence",
+        steps: FINAL_REFLECTION_STEPS,
+        reaction:
+          "\"thank you. head over to Rowan before you leave — there are a few last questions.\"",
+        advanceTo: QUEST_STAGES.POST_GAME,
       };
     }
 
-    return {
-      type: "info",
-        message:
-          "Olive keeps treating the campus walk like evidence. The route is simple on purpose: notice what the path itself is trying to show you.",
-    };
-  }
-
-  if (npcId === "rowan") {
-    if (quest.stage === QUEST_STAGES.ROWAN_FINAL) {
-      return {
-        type: "question",
-        message: STATION_DIALOGS.rowan.intro,
-        choices: STATION_DIALOGS.rowan.choices,
-        advanceTo: QUEST_STAGES.COMPLETE,
-      };
-    }
-    if (quest.stage === QUEST_STAGES.COMPLETE) {
-      return { type: "info", message: STATION_DIALOGS.rowan.visitedMessage };
-    }
     return {
       type: "info",
       message:
-        "Rowan is holding his question until you've walked the full route. He wants your view after the site has had time to contradict itself.",
+        "Olive the Owl — Sustainability Guide\n\nOlive watches the path. \"keep going. there's more to discover in the zones ahead.\"",
     };
   }
 
-  const station = STATION_DIALOGS[npcId];
-  if (!station) return null;
+  // ── ROWAN ──────────────────────────────────────────────────────────────────
+  if (npcId === "rowan") {
+    if (quest.stage === QUEST_STAGES.POST_GAME) {
+      return {
+        type: "sequence",
+        steps: POST_GAME_STEPS,
+        reaction:
+          "\"that's everything. thank you for your honest reflection. your responses will help Delaware understand where the real gaps are.\"",
+        advanceTo: QUEST_STAGES.COMPLETE,
+      };
+    }
 
-  if (quest.visited.includes(npcId)) {
-    return { type: "info", message: station.visitedMessage };
+    if (quest.stage === QUEST_STAGES.COMPLETE) {
+      return {
+        type: "info",
+        message:
+          "Rowan the Hare — Post-Reflection\n\n\"journey complete. the work of closing the gap between ambition and practice is ongoing. your view is part of that.\"",
+      };
+    }
+
+    return {
+      type: "info",
+      message:
+        "Rowan the Hare — Post-Reflection\n\n\"explore the other zones first. i'll be here when you're ready for the final reflection.\"",
+    };
   }
 
-  return {
-    type: "question",
-    message: station.intro,
-    choices: station.choices,
-  };
+  // ── DAISY (optional ambient NPC) ───────────────────────────────────────────
+  if (npcId === "daisy") {
+    return {
+      type: "info",
+      message:
+        "Daisy the Deer — People & Culture\n\n\"feel free to explore. every zone you visit adds a piece to the picture. and if you want to understand more about what any of these topics mean in practice, Olive can help.\"",
+    };
+  }
+
+  // ── PILLAR NPCs ────────────────────────────────────────────────────────────
+  if (["frank", "otis", "suzy", "hazel"].includes(npcId)) {
+    const beat = quest.pillarBeats?.[npcId] || 0;
+
+    const stepsMap = {
+      frank: FRANK_PILLAR_STEPS,
+      otis: OTIS_PILLAR_STEPS,
+      suzy: SUZY_PILLAR_STEPS,
+      hazel: HAZEL_PILLAR_STEPS,
+    };
+
+    if (beat === 0) {
+      return {
+        type: "sequence",
+        steps: stepsMap[npcId],
+        reaction: PILLAR_REACTIONS[npcId],
+        pillarNpcId: npcId,
+        adaptiveGapStep: ADAPTIVE_GAP_STEPS[npcId],
+      };
+    }
+
+    return {
+      type: "info",
+      message: PILLAR_VISITED_MESSAGES[npcId],
+    };
+  }
+
+  return null;
 }
 
+// ─── OBJECTIVE LABELS ─────────────────────────────────────────────────────────
+
+const NPC_DISPLAY_NAMES = { frank: "Frank", otis: "Otis", suzy: "Suzy", hazel: "Hazel" };
+
 export function getTaskLabel(quest) {
+  const townOrder = quest.pillarOrder?.town || TOWN_STATION_IDS;
+  const officeOrder = quest.pillarOrder?.office || OFFICE_STATION_IDS;
+
   switch (quest.stage) {
     case QUEST_STAGES.MEET_OLIVE:
-      return "1. Follow the main path to Olive at the lookout.";
-    case QUEST_STAGES.ARRIVAL_INSPECTION:
-    case QUEST_STAGES.OLIVE_DEBRIEF:
-      return "2. Listen to Olive's first interpretation of the site.";
-    case QUEST_STAGES.TOWN_STATIONS: {
-      const remaining = TOWN_STATION_IDS.filter((id) => !quest.visited.includes(id));
-      if (remaining.length === 0) return "3. Continue straight into the Delaware building.";
-      return `3. Walk up to the outdoor team members in order (${2 - remaining.length}/2 complete): ${remaining.join(" then ")}.`;
+      return "1. Follow the path to Olive — your sustainability guide.";
+
+    case QUEST_STAGES.BASELINE_DILEMMA:
+      return "2. Talk to Olive and answer her opening questions.";
+
+    case QUEST_STAGES.TOWN_PILLARS: {
+      const remaining = townOrder.filter((id) => !quest.visited.includes(id));
+      if (remaining.length === 0) return "3. Head into the Delaware building.";
+      const done = townOrder.length - remaining.length;
+      return `3. Visit the zone guides outdoors (${done}/2 complete) — find ${NPC_DISPLAY_NAMES[remaining[0]]}.`;
     }
+
     case QUEST_STAGES.GO_TO_OFFICE:
-      return "3. Enter the Delaware building to continue indoors.";
-    case QUEST_STAGES.OFFICE_STATIONS: {
-      const remaining = OFFICE_STATION_IDS.filter((id) => !quest.visited.includes(id));
-      if (remaining.length === 0) return "4. Continue to the terrace for the council gathering.";
-      return `4. Walk up to the Delaware team members (${3 - remaining.length}/3 complete): ${remaining.join(" then ")}.`;
+      return "3. Enter the Delaware building to continue.";
+
+    case QUEST_STAGES.OFFICE_PILLARS: {
+      const remaining = officeOrder.filter((id) => !quest.visited.includes(id));
+      if (remaining.length === 0) return "4. Return to the terrace for the council gathering.";
+      const done = officeOrder.length - remaining.length;
+      return `4. Visit the zone guides inside (${done}/2 complete) — find ${NPC_DISPLAY_NAMES[remaining[0]]}.`;
     }
+
     case QUEST_STAGES.RETURN_TO_OLIVE:
-    case QUEST_STAGES.COUNCIL_REFLECTION:
       return "5. Walk to your seat at the council table.";
-    case QUEST_STAGES.ROWAN_FINAL:
-      return "6. Answer Rowan's final question on credible leadership.";
+
+    case QUEST_STAGES.POST_GAME:
+      return "6. Speak with Rowan for the final reflection.";
+
     case QUEST_STAGES.COMPLETE:
-      return "Route complete. Open your final ESG report.";
+      return "Journey complete. Open your Delaware sustainability report.";
+
     default:
       return "Explore the site.";
   }
 }
+
+// ─── LEGACY EXPORTS (kept for backward compatibility) ─────────────────────────
+
+export const REFLECTION_PROMPTS = [];
+
+export function getInspectableById() { return null; }
+export function getActiveInspectables() { return []; }
