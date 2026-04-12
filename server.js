@@ -33,6 +33,18 @@ const COUNCIL_VOICES = {
   rowan: { voice: "verse", instructions: "reflective, poetic, gently mischievous, calm closing energy; thoughtful pace." },
 };
 
+function buildNaturalSpeechInstructions(characterInstructions) {
+  return [
+    "sound like a real person speaking naturally, not a polished ai assistant or announcer",
+    "use subtle conversational pacing with tiny pauses where they feel natural",
+    "speak slightly faster than average natural conversation, but never rushed",
+    "keep the performance grounded and believable",
+    "avoid exaggerated theatrical acting, sales tone, or overly perfect cadence",
+    "light natural variation in emphasis is good; keep it smooth and human",
+    characterInstructions,
+  ].join("; ");
+}
+
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
@@ -340,8 +352,8 @@ async function synthesizeCouncilSpeech(apiKey, parsed) {
       model: OPENAI_TTS_MODEL,
       voice: voiceConfig.voice,
       input: parsed.text,
-      instructions: voiceConfig.instructions,
-      response_format: "mp3",
+      instructions: buildNaturalSpeechInstructions(voiceConfig.instructions),
+      response_format: "wav",
     }),
   });
 
@@ -359,7 +371,7 @@ async function synthesizeCouncilSpeech(apiKey, parsed) {
 
   return {
     audioBase64: audioBuffer.toString("base64"),
-    audioMime: response.headers.get("content-type") || "audio/mpeg",
+    audioMime: response.headers.get("content-type") || "audio/wav",
     audioError: "",
   };
 }
