@@ -2,6 +2,8 @@
 // Builds shared prompt/parser helpers for the council meeting.
 // The browser calls our own backend route, which then calls OpenAI.
 
+import { getOpeningPov } from "../data/npcs.js";
+
 // ── NPC roster ────────────────────────────────────────────────────────────────
 
 export const COUNCIL_NPCS = [
@@ -54,6 +56,8 @@ function summarizeChoices(choices) {
   // Opening dilemma
   const dilemma = choices.find((c) => c.stepId === "opening_dilemma");
   if (dilemma) lines.push(`\nOpening dilemma: "${dilemma.choiceLabel}"`);
+  const commitment = choices.find((c) => c.stepId === "opening_commitment");
+  if (commitment) lines.push(`Opening pushback: "${commitment.choiceLabel}"`);
 
   // Final reflection
   const finalPairs = [
@@ -81,8 +85,14 @@ function summarizeChoices(choices) {
 export function buildCouncilSystemPrompt(quest) {
   const profile  = quest?.playerProfile || {};
   const context  = summarizeChoices(quest?.choices);
+  const dilemmaChoice = quest?.choices?.find((c) => c.stepId === "opening_dilemma");
+  const openingPov = getOpeningPov(quest?.openingPov || dilemmaChoice?.choiceKey);
+  const openingPovBlock = openingPov
+    ? `\nPLAYER'S STARTING POV\n- ${openingPov.title}
+- ${openingPov.routeSummary}`
+    : "";
 
-  return `You are the AI running an interactive council meeting inside a pixel-art sustainability learning game built for Delaware North, a global food and hospitality company.
+  return `You are the AI running an interactive council meeting inside a pixel-art sustainability learning game built for delaware, an international business and technology consultancy.
 
 SETTING
 The player has just completed a journey through Delaware's four sustainability pillars — Environmental Stewardship, People & Culture, Business Conduct, and Responsible Value Chain. They are now seated at the council table for an open reflective discussion with the sustainability characters they met during the game.
@@ -94,6 +104,7 @@ PLAYER PROFILE
 
 PLAYER'S ACTUAL GAME CHOICES
 ${context}
+${openingPovBlock}
 
 CHARACTERS AT THE TABLE
 Each has a distinct voice. Pick the most contextually natural speaker for each turn.
@@ -114,6 +125,7 @@ STYLE RULES
 - Keep each response to 2–4 sentences maximum, then one open question (vary between asking and not asking on alternate turns to keep it conversational)
 - Write in lowercase, warm, conversational tone — no corporate language or jargon
 - Reference at least one specific choice the player made (use the data above) to make it personal
+- Treat the opening dilemma as the player's starting moral lens, then test or complicate it using later choices
 - Never judge or imply there is a wrong answer — curiosity only
 - Rotate through characters naturally; don't use the same character twice in a row
 - Let the characters feel distinct: a little sass, wit, skepticism, warmth, or intellectual edge is good when it fits the speaker

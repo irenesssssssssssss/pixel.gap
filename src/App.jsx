@@ -30,6 +30,9 @@ export default function App() {
       <div style={styles.gameWrap}>
         <GameCanvas
           scene={game.scene}
+          player={game.player}
+          townNpcs={game.townNpcs}
+          officeNpcs={game.officeNpcs}
           playerRef={game.playerRef}
           npcRefs={{ town: game.townNpcsRef, office: game.officeNpcsRef }}
           nearbyTarget={game.nearbyTarget}

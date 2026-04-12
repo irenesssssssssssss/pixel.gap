@@ -15,6 +15,137 @@ const PILLAR_CHOICES = [
   { key: "chain", label: "Responsible Value Chain" },
 ];
 
+export const OPENING_POVS = {
+  env: {
+    title: "Wider-Impact Lens",
+    routeLabel: "impact-first route",
+    routeSummary:
+      "you chose to look past the smooth status update and protect the wider impact hidden underneath it.",
+    profileTitle: "Wider-Impact Watcher",
+    profileSummary:
+      "You notice when a project looks fine on the surface but creates bigger consequences underneath, and you would rather name that early than let it compound.",
+    town: ["frank", "otis"],
+    office: ["suzy", "hazel"],
+  },
+  people: {
+    title: "People-Impact Lens",
+    routeLabel: "people-first route",
+    routeSummary:
+      "you chose to protect the people carrying the cost of pressure before anything else.",
+    profileTitle: "People & Culture Advocate",
+    profileSummary:
+      "You prioritize wellbeing, fairness, and psychological safety, especially when deadlines tempt people to absorb the damage quietly.",
+    town: ["otis", "frank"],
+    office: ["suzy", "hazel"],
+  },
+  conduct: {
+    title: "Integrity Lens",
+    routeLabel: "integrity-first route",
+    routeSummary:
+      "you chose to stop the moment pressure started bending honesty, process, or professional standards.",
+    profileTitle: "Integrity-First Practitioner",
+    profileSummary:
+      "You place high value on naming the real status clearly, keeping a defensible record, and resisting half-truths that start sounding normal under pressure.",
+    town: ["frank", "otis"],
+    office: ["suzy", "hazel"],
+  },
+  chain: {
+    title: "Long-Term Trust Lens",
+    routeLabel: "long-view route",
+    routeSummary:
+      "you chose to think beyond tomorrow's checkpoint and protect the longer chain of trust and consequences that follows it.",
+    profileTitle: "Long-View Decision Maker",
+    profileSummary:
+      "You look beyond the immediate meeting and consider how today's compromise shapes trust, decisions, and risk further down the line.",
+    town: ["frank", "otis"],
+    office: ["hazel", "suzy"],
+  },
+};
+
+export function getOpeningPov(choiceKey) {
+  return OPENING_POVS[choiceKey] || null;
+}
+
+export function getOpeningFollowupStep(choiceKey) {
+  const followups = {
+    env: {
+      id: "opening_commitment",
+      message:
+        "\"your client sponsor says the gaps are manageable and that tomorrow's checkpoint should stay focused on momentum. if you're protecting the wider impact, what cost are you actually willing to take on?\"",
+      choices: [
+        { key: "name_bigger_risk", label: "name the broader downstream risk now, even if it changes the tone of the checkpoint immediately." },
+        { key: "caveat_progress", label: "allow the progress story, but only with explicit caveats about what is still fragile." },
+        { key: "escalate_hidden_impact", label: "escalate internally that the current message hides a wider impact the client should not miss." },
+        { key: "accept_short_term", label: "let tomorrow stay positive and trust the team to deal with the bigger consequences afterward." },
+      ],
+    },
+    people: {
+      id: "opening_commitment",
+      message:
+        "\"the teammate carrying the extra load says they're fine, but it's obvious they've been absorbing the pressure for weeks. if you keep the human cost at the centre, what are you prepared to do next?\"",
+      choices: [
+        { key: "intervene_now", label: "raise it now and force a reset, even if that makes tomorrow's conversation more difficult." },
+        { key: "protect_quietly", label: "check in privately and redistribute pressure quietly before the checkpoint hits." },
+        { key: "document_pattern", label: "document the pattern and push for action the moment the checkpoint pressure passes." },
+        { key: "accept_burden", label: "let them carry it a little longer so the team can get through tomorrow intact." },
+      ],
+    },
+    conduct: {
+      id: "opening_commitment",
+      message:
+        "\"your project lead says the deck is 'directionally true' and that fully unpacking the risks tomorrow would only create noise. if you really mean integrity comes first, what do you do when everyone else calls that overreaction?\"",
+      choices: [
+        { key: "freeze_until_clear", label: "correct the message before the checkpoint, even if you are blamed for slowing things down." },
+        { key: "escalate_for_cover", label: "escalate immediately and make someone formally own the gap instead of letting it stay implicit." },
+        { key: "limited_exception", label: "allow a narrower message, but only with explicit wording about what is unresolved." },
+        { key: "go_with_flow", label: "let the positive version stand and fix the underlying issue after the meeting." },
+      ],
+    },
+    chain: {
+      id: "opening_commitment",
+      message:
+        "\"everyone keeps calling this a temporary compromise for one checkpoint. but you know once a softened story lands well, it often becomes the version people keep using. if you're taking the long view, how far do you push it?\"",
+      choices: [
+        { key: "reopen_plan", label: "reopen the plan now, even if tomorrow becomes less polished and more uncomfortable." },
+        { key: "force_conditions", label: "allow the checkpoint to proceed, but only with explicit assumptions, risks, and next-step conditions." },
+        { key: "senior_tradeoff", label: "push the trade-off upward and make the long-term trust risk explicit to leadership." },
+        { key: "accept_temporary", label: "accept it as a one-time compromise and trust the team to correct course later." },
+      ],
+    },
+  };
+
+  return followups[choiceKey] || null;
+}
+
+export function buildOpeningRouteReaction(choiceKey, commitmentKey = null) {
+  const pov = getOpeningPov(choiceKey);
+  if (!pov) {
+    return "\"good. follow the path to the first zone and find your guide. there's no wrong direction — just an honest one.\"";
+  }
+
+  const commitmentMap = {
+    name_bigger_risk: "you'd rather make the room uncomfortable now than let a bigger impact stay hidden.",
+    caveat_progress: "you can live with momentum, but only if the fragile parts are named out loud.",
+    escalate_hidden_impact: "you want the hidden impact surfaced formally, not left underneath a polished story.",
+    accept_short_term: "you can feel how easily a short-term success story starts outranking wider consequences.",
+    intervene_now: "you'd create discomfort now rather than let people carry harm in silence.",
+    protect_quietly: "you want to protect people, but without turning the whole room against the decision.",
+    document_pattern: "you notice harm early, even when the system only wants proof after the fact.",
+    accept_burden: "you can feel how quickly pressure makes human cost sound temporary and acceptable.",
+    freeze_until_clear: "you'd rather take heat for slowing the message than for letting a misleading status harden into fact.",
+    escalate_for_cover: "you want the ethical risk owned explicitly, not buried inside team optimism.",
+    limited_exception: "you can tolerate a narrow compromise, but only if it is stated clearly and contained.",
+    go_with_flow: "you can see how fast a half-true version becomes the normal one once it goes unchallenged.",
+    reopen_plan: "you'd rather reopen the plan now than inherit a false sense of security later.",
+    force_conditions: "you want any short-term compromise tied to visible conditions and accountability.",
+    senior_tradeoff: "you want the long-tail trust risk made explicit before the story settles.",
+    accept_temporary: "you can feel how easily a 'temporary' compromise becomes the version everyone keeps working from.",
+  };
+  const commitmentSummary = commitmentMap[commitmentKey] || "now we know what kind of cost you're willing to carry for that instinct.";
+
+  return `"good. that's a real position, not a slogan. your route begins through a ${pov.routeLabel}, and ${commitmentSummary} you'll meet four guides on the way: Frank on environmental stewardship, Otis on people and culture, Suzy on business conduct, and Hazel on responsible value chain. Frank and Otis are outside first; Suzy and Hazel are waiting inside the Delaware building."`;
+}
+
 // ─── NPC ROSTER ─────────────────────────────────────────────────────────────
 
 export const TOWN_NPCS_START = [
@@ -156,12 +287,12 @@ const OLIVE_INTRO_STEPS = [
   {
     id: "opening_dilemma",
     message:
-      "\"good. one more thing before you head out.\"\n\n\"imagine you're helping prepare an important project. one option moves faster but raises concerns in another area. another takes more effort but feels more responsible.\"\n\n\"in that moment, what matters most to you?\"",
+      "\"good. one more thing before you head out.\"\n\n\"it's late, and tomorrow you have an important client checkpoint. officially the project is on track. in reality, some work is shakier than the status slide suggests, one teammate has been carrying more than people realize, and your client sponsor has already hinted that tomorrow should stay focused on progress, not problems.\"\n\n\"if you're fully candid now, the conversation gets harder, the relationship may become tense, and the plan may slow down. if you stay positive, the meeting goes well, but the client walks away with a cleaner picture than you believe is true.\"\n\n\"when pressure rises like that, which line do you protect first?\"",
     choices: [
-      { key: "env", label: "reducing waste and minimising the environmental footprint of the work." },
-      { key: "people", label: "making sure the process is fair and the people involved feel genuinely supported." },
-      { key: "conduct", label: "following the most ethical and compliant path — even if it takes longer." },
-      { key: "chain", label: "thinking about how the decision affects partners, suppliers, and longer-term impact." },
+      { key: "env", label: "the wider impact. i won't protect today's smooth story if it creates bigger problems underneath." },
+      { key: "people", label: "the human cost. i won't let one person quietly absorb the pressure so the meeting still looks good." },
+      { key: "conduct", label: "the integrity of the message. i won't present the project as safer or cleaner than i believe it is." },
+      { key: "chain", label: "the long-term trust. i won't make tomorrow easier if it weakens the decisions that come after it." },
     ],
   },
 ];
@@ -541,11 +672,11 @@ export function getNpcDialog(npcId, quest) {
 
 // ─── OBJECTIVE LABELS ─────────────────────────────────────────────────────────
 
-const NPC_DISPLAY_NAMES = { frank: "Frank", otis: "Otis", suzy: "Suzy", hazel: "Hazel" };
-
 export function getTaskLabel(quest) {
   const townOrder = quest.pillarOrder?.town || TOWN_STATION_IDS;
   const officeOrder = quest.pillarOrder?.office || OFFICE_STATION_IDS;
+  const openingPov = getOpeningPov(quest.openingPov);
+  const routeLabel = openingPov?.routeLabel || "chosen route";
 
   switch (quest.stage) {
     case QUEST_STAGES.MEET_OLIVE:
@@ -558,17 +689,23 @@ export function getTaskLabel(quest) {
       const remaining = townOrder.filter((id) => !quest.visited.includes(id));
       if (remaining.length === 0) return "3. Head into the Delaware building.";
       const done = townOrder.length - remaining.length;
-      return `3. Visit the zone guides outdoors (${done}/2 complete) — find ${NPC_DISPLAY_NAMES[remaining[0]]}.`;
+      if (remaining.length === 2) {
+        return `3. Follow your ${routeLabel} outdoors (${done}/2 complete) — suggested first: ${remaining[0] === "otis" ? "Otis" : "Frank"}.`;
+      }
+      return `3. Finish the outdoor guides (${done}/2 complete) — next up: ${remaining[0] === "otis" ? "Otis" : "Frank"}.`;
     }
 
     case QUEST_STAGES.GO_TO_OFFICE:
-      return "3. Enter the Delaware building to continue.";
+      return "4. Enter the Delaware building to meet the remaining guides: Suzy and Hazel.";
 
     case QUEST_STAGES.OFFICE_PILLARS: {
       const remaining = officeOrder.filter((id) => !quest.visited.includes(id));
       if (remaining.length === 0) return "4. Return to the terrace for the council gathering.";
       const done = officeOrder.length - remaining.length;
-      return `4. Visit the zone guides inside (${done}/2 complete) — find ${NPC_DISPLAY_NAMES[remaining[0]]}.`;
+      if (remaining.length === 2) {
+        return `4. Continue your ${routeLabel} inside (${done}/2 complete) — suggested first: ${remaining[0] === "hazel" ? "Hazel" : "Suzy"}.`;
+      }
+      return `4. Finish the indoor guides (${done}/2 complete) — next up: ${remaining[0] === "hazel" ? "Hazel" : "Suzy"}.`;
     }
 
     case QUEST_STAGES.RETURN_TO_OLIVE:

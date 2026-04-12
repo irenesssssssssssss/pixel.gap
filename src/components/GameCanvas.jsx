@@ -4,6 +4,8 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { VIEW_COLS, VIEW_ROWS, TILE, SCALE } from "../constants/game";
+import { SCENES } from "../data/scenes";
+import { owlHouseGuide } from "../data/owlHouseMap";
 import { drawScene } from "../renderer/drawScene";
 import DialogOverlay from "./DialogOverlay";
 import MiniMap from "./MiniMap";
@@ -13,6 +15,9 @@ import LearningHouse from "./LearningHouse";
 
 export default function GameCanvas({
   scene,
+  player,
+  townNpcs,
+  officeNpcs,
   playerRef,
   npcRefs,      // { town: Ref, office: Ref }
   quest,
@@ -37,6 +42,7 @@ export default function GameCanvas({
   const viewportWidth  = VIEW_COLS * TILE;
   const viewportHeight = VIEW_ROWS * TILE;
   const [displayScale, setDisplayScale] = useState(SCALE);
+  const npcLabels = getNpcLabels({ scene, player, townNpcs, officeNpcs, displayScale, viewportWidth });
 
   useEffect(() => {
     function updateScale() {
@@ -99,6 +105,20 @@ export default function GameCanvas({
               <div style={styles.bannerText}>{banner.message}</div>
             </div>
           )}
+          <div style={styles.labelLayer}>
+            {npcLabels.map((label) => (
+              <div
+                key={`${label.name}-${label.left}-${label.top}`}
+                style={{
+                  ...styles.npcLabel,
+                  left: label.left,
+                  top: label.top,
+                }}
+              >
+                {label.name}
+              </div>
+            ))}
+          </div>
           {scene !== "owlhouse" && (
             <MiniMap
               scene={scene}
@@ -193,6 +213,26 @@ const styles = {
     gap: 1,
     alignItems: "center",
   },
+  labelLayer: {
+    position: "absolute",
+    top: 5,
+    left: 5,
+    width: "calc(100% - 10px)",
+    height: "calc(100% - 10px)",
+    zIndex: 18,
+    pointerEvents: "none",
+  },
+  npcLabel: {
+    position: "absolute",
+    fontSize: 13,
+    fontWeight: 800,
+    lineHeight: 1,
+    color: "#d8e8b7",
+    fontFamily: '"Avenir Next", "Trebuchet MS", system-ui, sans-serif',
+    textShadow: "0 1px 2px rgba(20, 28, 23, 0.95), 0 0 5px rgba(20, 28, 23, 0.5)",
+    transform: "translateX(-50%)",
+    whiteSpace: "nowrap",
+  },
   bannerTitle: {
     fontSize: 10,
     letterSpacing: 1.4,
@@ -240,3 +280,32 @@ const styles = {
     boxShadow: "0 10px 24px rgba(38, 54, 42, 0.2)",
   },
 };
+
+function getNpcLabels({ scene, player, townNpcs, officeNpcs, displayScale, viewportWidth }) {
+  if (!player) return [];
+
+  const sceneData = SCENES[scene];
+  if (!sceneData) return [];
+
+  const camX = Math.max(0, Math.min(player.x - Math.floor(VIEW_COLS / 2), Math.max(0, sceneData.w - VIEW_COLS)));
+  const camY = Math.max(0, Math.min(player.y - Math.floor(VIEW_ROWS / 2), Math.max(0, sceneData.h - VIEW_ROWS)));
+
+  const npcs = scene === "town"
+    ? townNpcs
+    : scene === "office"
+      ? officeNpcs
+      : [owlHouseGuide];
+
+  return (npcs || [])
+    .filter((npc) => npc?.name)
+    .map((npc) => {
+      const screenX = (npc.x - camX) * TILE;
+      const screenY = (npc.y - camY) * TILE;
+      return {
+        name: npc.name.split(" ")[0],
+        left: (screenX + 8) * displayScale,
+        top: Math.max(2, (screenY - 11) * displayScale),
+      };
+    })
+    .filter((label) => label.left >= -40 && label.left <= viewportWidth * displayScale + 40);
+}

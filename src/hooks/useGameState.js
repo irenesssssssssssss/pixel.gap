@@ -10,6 +10,9 @@ import {
   TOWN_STATION_IDS,
   OFFICE_STATION_IDS,
   PILLAR_STEP_PREFIXES,
+  buildOpeningRouteReaction,
+  getOpeningFollowupStep,
+  getOpeningPov,
   getNpcDialog,
   getTaskLabel,
 } from "../data/npcs";
@@ -38,6 +41,7 @@ const INITIAL_QUEST = {
   reflections: {},
   pillarBeats: {},   // { frank: 0|1, otis: 0|1, suzy: 0|1, hazel: 0|1 }
   pillarOrder: null, // { town: ["frank","otis"] | ["otis","frank"], office: ["suzy","hazel"] | ["hazel","suzy"] }
+  openingPov: null, // env | people | conduct | chain
   playerProfile: null, // { roleLevel, branch, country }
 };
 
@@ -50,12 +54,13 @@ const AUTO_TRIGGERABLE_STAGES = new Set([
   QUEST_STAGES.POST_GAME,
 ]);
 
+const PILLAR_NPC_IDS = new Set(["frank", "otis", "suzy", "hazel"]);
+
 // Determine pillar order from the opening dilemma choice.
 function derivePillarOrder(choiceKey) {
-  // env / people → town NPC first (frank or otis)
-  // conduct / chain → office pillar preferred first → office order changes
-  const town = choiceKey === "people" ? ["otis", "frank"] : ["frank", "otis"];
-  const office = choiceKey === "chain" ? ["hazel", "suzy"] : ["suzy", "hazel"];
+  const openingPov = getOpeningPov(choiceKey);
+  const town = openingPov?.town || TOWN_STATION_IDS;
+  const office = openingPov?.office || OFFICE_STATION_IDS;
   return { town, office };
 }
 
@@ -115,6 +120,7 @@ export function useGameState() {
         return findTownNpc("olive");
 
       case QUEST_STAGES.TOWN_PILLARS: {
+        const remaining = townOrder.filter((id) => !quest.visited.includes(id));
         const next = townOrder.find((id) => !quest.visited.includes(id));
         if (next) return findTownNpc(next);
         return { x: TOWN_OFFICE_ENTRY.x, y: TOWN_OFFICE_ENTRY.y, label: "office doorway", scene: "town" };
@@ -124,6 +130,7 @@ export function useGameState() {
         return { x: TOWN_OFFICE_ENTRY.x, y: TOWN_OFFICE_ENTRY.y, label: "office doorway", scene: "town" };
 
       case QUEST_STAGES.OFFICE_PILLARS: {
+        const remaining = officeOrder.filter((id) => !quest.visited.includes(id));
         const next = officeOrder.find((id) => !quest.visited.includes(id));
         if (next) return findOfficeNpc(next);
         return { x: OFFICE_EXIT_TILE.x, y: OFFICE_EXIT_TILE.y, label: "terrace door", scene: "office" };
@@ -264,6 +271,8 @@ export function useGameState() {
       pillarNpcId: dialogData.pillarNpcId || null,
       adaptiveGapStep: dialogData.adaptiveGapStep || null,
       adaptiveFollowupShown: false,
+      openingFollowupShown: false,
+      openingPovChoiceKey: null,
     });
   }
 
@@ -325,10 +334,29 @@ export function useGameState() {
 
       // ── Opening dilemma: derive pillar order from choice ──────────────────
       if (current.stepId === "opening_dilemma") {
+        next.openingPov = choice.key;
         next.pillarOrder = derivePillarOrder(choice.key);
       }
 
       if (current.type === "sequence") {
+        if (current.stepId === "opening_dilemma" && !current.openingFollowupShown) {
+          const followupStep = getOpeningFollowupStep(choice.key);
+          if (followupStep) {
+            setDialog({
+              ...current,
+              history,
+              steps: [...current.steps, followupStep],
+              stepIndex: current.stepIndex + 1,
+              stepId: followupStep.id,
+              message: followupStep.message,
+              choices: followupStep.choices,
+              openingFollowupShown: true,
+              openingPovChoiceKey: choice.key,
+            });
+            return next;
+          }
+        }
+
         const nextStepIndex = current.stepIndex + 1;
         const nextStep = current.steps[nextStepIndex];
 
@@ -371,6 +399,12 @@ export function useGameState() {
 
         // No adaptive follow-up (or already shown) — complete the sequence
         const advanced = applyQuestAdvance(next, current.advanceTo, current.npcId, pillarId);
+        const reaction =
+          current.stepId === "opening_commitment"
+            ? buildOpeningRouteReaction(current.openingPovChoiceKey || next.openingPov, choice.key)
+            : current.stepId === "opening_dilemma"
+              ? buildOpeningRouteReaction(choice.key)
+            : current.reaction;
         setDialog({
           type: "reaction",
           phase: "reaction",
@@ -378,7 +412,7 @@ export function useGameState() {
           npcName: current.npcName,
           npcRole: current.npcRole,
           history,
-          reaction: current.reaction,
+          reaction,
         });
         return advanced;
       }
@@ -581,28 +615,34 @@ export function useGameState() {
   // Auto-trigger NPC interaction when player is adjacent to objective
   useEffect(() => {
     if (councilOpen) return;                          // council meeting handles POST_GAME interaction
-    if (!objectiveTarget || (objectiveTarget.scene && objectiveTarget.scene !== scene)) return;
     if (dialogRef.current) return;
     if (!AUTO_TRIGGERABLE_STAGES.has(quest.stage)) return;
 
-    const targetKey = `${scene}:${quest.stage}:${objectiveTarget.id || objectiveTarget.label || objectiveTarget.name}`;
-    const distance = Math.abs(objectiveTarget.x - player.x) + Math.abs(objectiveTarget.y - player.y);
+    const triggerTarget =
+      (quest.stage === QUEST_STAGES.TOWN_PILLARS || quest.stage === QUEST_STAGES.OFFICE_PILLARS)
+        ? (nearbyNpc && PILLAR_NPC_IDS.has(nearbyNpc.id) ? nearbyNpc : null)
+        : objectiveTarget;
+
+    if (!triggerTarget || (triggerTarget.scene && triggerTarget.scene !== scene)) return;
+
+    const targetKey = `${scene}:${quest.stage}:${triggerTarget.id || triggerTarget.label || triggerTarget.name}`;
+    const distance = Math.abs(triggerTarget.x - player.x) + Math.abs(triggerTarget.y - player.y);
     if (distance > 1) return;
     if (lastAutoTriggerRef.current === targetKey) return;
     lastAutoTriggerRef.current = targetKey;
 
     // Council seat — player walks to chair, triggers Olive's council sequence
-    if (objectiveTarget.id === "councilSeat") {
+    if (triggerTarget.id === "councilSeat") {
       const oliveNpc = currentNpcs.find((n) => n.id === "olive");
       if (oliveNpc) handleNpcInteraction(oliveNpc);
       return;
     }
 
-    const npcMatch = currentNpcs.find((npc) => npc.id === objectiveTarget.id);
+    const npcMatch = currentNpcs.find((npc) => npc.id === triggerTarget.id);
     if (npcMatch) {
       handleNpcInteraction(npcMatch);
     }
-  }, [councilOpen, currentNpcs, objectiveTarget, player, quest.stage, scene]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [councilOpen, currentNpcs, nearbyNpc, objectiveTarget, player, quest.stage, scene]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Player movement loop
   useEffect(() => {

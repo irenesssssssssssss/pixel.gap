@@ -1,6 +1,8 @@
 // Delaware sustainability report builder.
 // Converts quest choices into a structured report for the dashboard.
 
+import { getOpeningPov } from "../data/npcs";
+
 const PILLAR_LABELS = {
   env: "Environmental Stewardship",
   people: "People & Culture",
@@ -36,8 +38,6 @@ function hasGap(choices, prefix) {
 
 // Build a display profile title based on opening dilemma tendency and pillar scores
 function getProfile(openingDilemmaKey, pillars) {
-  const pillarLabel = PILLAR_LABELS[openingDilemmaKey] || "Sustainability";
-
   // Find the pillar with highest visibility score
   const pillarScores = Object.entries(pillars).map(([key, data]) => ({
     key,
@@ -45,6 +45,7 @@ function getProfile(openingDilemmaKey, pillars) {
   }));
   pillarScores.sort((a, b) => b.score - a.score);
   const dominantPillar = pillarScores[0]?.key || openingDilemmaKey || "env";
+  const openingPov = getOpeningPov(openingDilemmaKey);
 
   const profileMap = {
     env: { title: "Environmental Risk Watcher", summary: "You tend to notice environmental trade-offs early and prefer action over extended process when the risk is visible." },
@@ -53,7 +54,9 @@ function getProfile(openingDilemmaKey, pillars) {
     chain: { title: "Responsible Value Chain Thinker", summary: "You think beyond internal operations and consider the longer-term impact on partners, suppliers, and external stakeholders." },
   };
 
-  const profileEntry = profileMap[openingDilemmaKey] || profileMap[dominantPillar] || profileMap.env;
+  const profileEntry = openingPov
+    ? { title: openingPov.profileTitle, summary: openingPov.profileSummary }
+    : profileMap[openingDilemmaKey] || profileMap[dominantPillar] || profileMap.env;
   return {
     ...profileEntry,
     dominantPillar,
@@ -101,7 +104,9 @@ export function buildResultsReport(quest) {
 
   // ── Opening dilemma ────────────────────────────────────────────────────────
   const openingDilemmaChoice = getChoice(choices, "opening_dilemma");
+  const openingCommitmentChoice = getChoice(choices, "opening_commitment");
   const openingDilemmaKey = openingDilemmaChoice?.choiceKey || null;
+  const openingPov = getOpeningPov(openingDilemmaKey);
 
   // ── Pillar data ────────────────────────────────────────────────────────────
   const pillars = {
@@ -188,6 +193,8 @@ export function buildResultsReport(quest) {
     profile,
     baseline,
     openingDilemma: openingDilemmaKey,
+    openingPov,
+    openingCommitment: openingCommitmentChoice?.choiceLabel || null,
     pillars,
     finalReflection,
     postGame,

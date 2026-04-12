@@ -31,6 +31,21 @@ export default function ResultsOverlay({ report, onClose }) {
         </div>
 
         <div style={styles.content}>
+          {report.openingPov && (
+            <section style={styles.section}>
+              <div style={styles.sectionTitle}>Your starting lens</div>
+              <div style={styles.openingCard}>
+                <div style={styles.openingTitle}>{report.openingPov.title}</div>
+                <div style={styles.openingSummary}>{report.openingPov.routeSummary}</div>
+                {report.openingCommitment && (
+                  <div style={styles.openingCommitment}>
+                    you backed that up by saying: {report.openingCommitment}
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
           <section style={styles.section}>
             <div style={styles.sectionTitle}>Pillar visibility scores</div>
             <div style={styles.scoreGrid}>
@@ -193,6 +208,33 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: 12,
+  },
+  openingCard: {
+    padding: 16,
+    borderRadius: 14,
+    background: "linear-gradient(180deg, rgba(255,255,255,0.9), rgba(242,237,226,0.95))",
+    border: "1px solid rgba(111, 127, 109, 0.16)",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.5)",
+  },
+  openingTitle: {
+    fontSize: 17,
+    fontWeight: 800,
+    color: "#304239",
+  },
+  openingSummary: {
+    marginTop: 8,
+    fontSize: 14,
+    lineHeight: 1.6,
+    color: "#57675d",
+  },
+  openingCommitment: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTop: "1px solid rgba(111, 127, 109, 0.14)",
+    fontSize: 13,
+    lineHeight: 1.55,
+    color: "#425247",
+    fontWeight: 600,
   },
   sectionTitle: {
     fontSize: 12,
