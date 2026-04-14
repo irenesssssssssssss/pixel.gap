@@ -434,7 +434,44 @@ export function useGameState() {
 
   function handleAdvanceDialog() {
     const current = dialogRef.current;
-    if (!current || (current.phase !== "info" && current.phase !== "reaction")) return;
+    if (!current) return;
+
+    // Empty-choices step (intro or outro) in question phase — no player choice to make
+    if (current.phase === "question" && (!current.choices || current.choices.length === 0)) {
+      if (current.type === "sequence") {
+        const nextStepIndex = current.stepIndex + 1;
+        const nextStep = current.steps[nextStepIndex];
+        if (nextStep) {
+          // Mid-sequence: advance to the next step
+          setDialog({
+            ...current,
+            history: [...(current.history || [])],
+            stepIndex: nextStepIndex,
+            stepId: nextStep.id,
+            message: nextStep.message,
+            choices: nextStep.choices,
+          });
+          return;
+        }
+        // Outro step — last step of the sequence: complete it properly
+        const pillarId = current.pillarNpcId || null;
+        setQuest((prev) => applyQuestAdvance(prev, current.advanceTo, current.npcId, pillarId));
+        setDialog({
+          type: "reaction",
+          phase: "reaction",
+          npcId: current.npcId,
+          npcName: current.npcName,
+          npcRole: current.npcRole,
+          history: current.history || [],
+          reaction: current.reaction,
+        });
+        return;
+      }
+      dismissDialog();
+      return;
+    }
+
+    if (current.phase !== "info" && current.phase !== "reaction") return;
 
     const shouldReleaseCurrentNpc =
       !!current.npcId && (current.phase === "reaction" || quest.visited.includes(current.npcId));
@@ -710,7 +747,10 @@ export function useGameState() {
       }
 
       if (e.key === " ") {
-        if (dialogRef.current?.phase === "info" || dialogRef.current?.phase === "reaction") {
+        const phase = dialogRef.current?.phase;
+        const choices = dialogRef.current?.choices;
+        const isEmptyChoicesStep = phase === "question" && (!choices || choices.length === 0);
+        if (phase === "info" || phase === "reaction" || isEmptyChoicesStep) {
           handleAdvanceDialog();
         } else {
           flashBanner("Current objective", getTaskLabel(quest), 1800);

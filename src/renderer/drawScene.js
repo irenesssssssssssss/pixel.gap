@@ -4,7 +4,7 @@
 
 import { TILE, VIEW_COLS, VIEW_ROWS } from "../constants/game";
 import { clamp, worldToScreen, rect } from "../engine/mapUtils";
-import { SCENES } from "../data/scenes";
+import { SCENES, OFFICE_EXIT_TILE, OWL_HOUSE_EXIT_TILE } from "../data/scenes";
 import {
   townTrees, townBuildings, townFences, townSigns, townBenches,
   townBarrels, townCrates, townLamps, townCanalPosts, townBridges,
@@ -58,6 +58,40 @@ export function drawScene(ctx, {
         drawGround(ctx, scene, wx, wy, x * TILE, y * TILE);
     }
   }
+
+  // ── Exit markers (drawn on top of ground, before sorted objects) ─────────
+  function drawExitMarker(wx, wy) {
+    const s = worldToScreen(wx, wy, camX, camY);
+    if (s.x < -TILE || s.y < -TILE || s.x > viewportWidth + TILE || s.y > viewportHeight + TILE) return;
+    const sx = s.x, sy = s.y;
+
+    // Warm green doormat stripe
+    rect(ctx, sx + 1, sy + 9, 14, 6, "rgba(100,180,120,0.30)");
+    rect(ctx, sx + 2, sy + 10, 12, 4, "rgba(180,240,190,0.18)");
+
+    // Downward-pointing chevron arrow
+    rect(ctx, sx + 4, sy + 4,  8, 2, "#7ab068");
+    rect(ctx, sx + 5, sy + 6,  6, 2, "#7ab068");
+    rect(ctx, sx + 6, sy + 8,  4, 2, "#7ab068");
+    rect(ctx, sx + 7, sy + 10, 2, 2, "#7ab068");
+    // Inner highlight on arrow
+    rect(ctx, sx + 4, sy + 4,  8, 1, "#b8e8a0");
+    rect(ctx, sx + 5, sy + 6,  6, 1, "#b8e8a0");
+    rect(ctx, sx + 6, sy + 8,  4, 1, "#b8e8a0");
+
+    // "EXIT" label above the tile
+    ctx.save();
+    ctx.font = "bold 7px 'Courier New', monospace";
+    ctx.textAlign = "center";
+    ctx.shadowColor = "rgba(0,0,0,0.9)";
+    ctx.shadowBlur = 4;
+    ctx.fillStyle = "#c8f0b0";
+    ctx.fillText("EXIT", sx + 8, sy - 3);
+    ctx.restore();
+  }
+
+  if (scene === "office")   drawExitMarker(OFFICE_EXIT_TILE.x,    OFFICE_EXIT_TILE.y);
+  if (scene === "owlhouse") drawExitMarker(OWL_HOUSE_EXIT_TILE.x, OWL_HOUSE_EXIT_TILE.y);
 
   // ── Build sorted drawable list ────────────────────────────────────────────
   const drawables = [];

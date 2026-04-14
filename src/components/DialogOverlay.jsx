@@ -17,11 +17,13 @@ const NPC_ACCENT = {
 export default function DialogOverlay({ dialog, onChoice, onAdvance, onSubmitReflection }) {
   const [hoveredIdx, setHoveredIdx] = useState(null);
   const [values, setValues]         = useState({});
+  const [openText, setOpenText]     = useState("");
   const historyRef                  = useRef(null);
 
   useEffect(() => {
     setValues(dialog?.phase === "reflection" ? dialog.initialValues || {} : {});
     setHoveredIdx(null);
+    setOpenText("");
   }, [dialog]);
 
   // Keep history scrolled to bottom
@@ -137,30 +139,65 @@ export default function DialogOverlay({ dialog, onChoice, onAdvance, onSubmitRef
         </div>
 
         {/* Choices */}
-        {isQuestion && dialog.choices && (
-          <div style={styles.choices}>
-            {dialog.choices.map((c, i) => (
-              <button
-                key={c.key}
-                style={{
-                  ...styles.choice,
-                  ...(hoveredIdx === i
-                    ? { ...styles.choiceHover, borderColor: accent }
-                    : {}),
-                }}
-                onMouseEnter={() => setHoveredIdx(i)}
-                onMouseLeave={() => setHoveredIdx(null)}
-                onClick={() => { setHoveredIdx(null); onChoice(c); }}
-              >
-                <span style={{ ...styles.choiceNum, background: accent }}>{i + 1}</span>
-                <span style={styles.choiceLabel}>{c.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        {isQuestion && dialog.choices && dialog.choices.length > 0 && (() => {
+          const openChoice = dialog.choices.length === 1 && dialog.choices[0].isOpenEnded
+            ? dialog.choices[0]
+            : null;
 
-        {/* Continue button (info / reaction) */}
-        {(isInfo || isReaction) && (
+          if (openChoice) {
+            return (
+              <div style={styles.openEndedArea}>
+                <textarea
+                  style={styles.openTextarea}
+                  placeholder="type your response here..."
+                  value={openText}
+                  onChange={(e) => setOpenText(e.target.value)}
+                  rows={3}
+                  autoFocus
+                />
+                <div style={styles.continueRow}>
+                  <button
+                    type="button"
+                    disabled={!openText.trim()}
+                    style={{
+                      ...styles.continueBtn,
+                      borderColor: openText.trim() ? accent : "rgba(180,210,175,0.2)",
+                      color: openText.trim() ? accent : "rgba(180,210,175,0.3)",
+                    }}
+                    onClick={() => onChoice({ ...openChoice, label: openText.trim() })}
+                  >
+                    submit ▶
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div style={styles.choices}>
+              {dialog.choices.map((c, i) => (
+                <button
+                  key={c.key}
+                  style={{
+                    ...styles.choice,
+                    ...(hoveredIdx === i
+                      ? { ...styles.choiceHover, borderColor: accent }
+                      : {}),
+                  }}
+                  onMouseEnter={() => setHoveredIdx(i)}
+                  onMouseLeave={() => setHoveredIdx(null)}
+                  onClick={() => { setHoveredIdx(null); onChoice(c); }}
+                >
+                  <span style={{ ...styles.choiceNum, background: accent }}>{i + 1}</span>
+                  <span style={styles.choiceLabel}>{c.label}</span>
+                </button>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* Continue button (info / reaction / empty-choices intro step) */}
+        {(isInfo || isReaction || (isQuestion && (!dialog.choices || dialog.choices.length === 0))) && (
           <div style={styles.continueRow}>
             <button
               type="button"
@@ -395,6 +432,25 @@ const styles = {
     color: "#ddeedd",
     fontSize: 14,
     outline: "none",
+  },
+  openEndedArea: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+    marginTop: 4,
+  },
+  openTextarea: {
+    resize: "vertical",
+    minHeight: 70,
+    borderRadius: 4,
+    border: "1px solid rgba(122,176,104,0.4)",
+    background: "rgba(255,255,255,0.04)",
+    padding: "10px",
+    font: "inherit",
+    color: "#ddeedd",
+    fontSize: 13,
+    outline: "none",
+    fontFamily: '"Courier New", "Lucida Console", monospace',
   },
   submitBtn: {
     alignSelf: "flex-end",
