@@ -25,15 +25,23 @@ export default function ProfileScreen({ onSubmit }) {
   const [team, setTeam] = useState("");
   const [country, setCountry] = useState("");
   const [error, setError] = useState("");
+  const canSubmit = Boolean(roleLevel && team.trim() && country.trim());
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!roleLevel || !team.trim() || !country.trim()) {
+    if (!canSubmit) {
       setError("please fill in all three fields to continue.");
       return;
     }
     setError("");
     onSubmit({ roleLevel, team: team.trim(), country: country.trim() });
+  }
+
+  function handleCountryKeyDown(e) {
+    if (e.key === "Tab" && !e.shiftKey && canSubmit) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
   }
 
   return (
@@ -44,18 +52,15 @@ export default function ProfileScreen({ onSubmit }) {
         <div style={styles.panelTopBar} />
         <div style={styles.inner}>
           <div style={styles.kickerRow}>
-            <div style={styles.kicker}>Delaware Sustainability Journey</div>
             <div style={styles.stepChip}>profile setup</div>
           </div>
 
           <div style={styles.heroBlock}>
-            <div style={styles.heroBadge}>your starting context</div>
             <h1 style={styles.heading}>set your starting point</h1>
             <p style={styles.body}>
               a few quick details help make the experience feel more relevant. answers are
               anonymous and only used in aggregate.
             </p>
-            <p style={styles.subtleMeta}>3 quick questions, then you are straight into the game.</p>
           </div>
 
           <form onSubmit={handleSubmit} style={styles.form}>
@@ -118,6 +123,7 @@ export default function ProfileScreen({ onSubmit }) {
                   type="text"
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
+                  onKeyDown={handleCountryKeyDown}
                   placeholder="e.g. Netherlands, Belgium, Germany"
                   style={styles.input}
                   autoComplete="off"
@@ -149,7 +155,7 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: 20,
+    padding: 16,
     position: "relative",
     overflow: "hidden",
   },
@@ -176,7 +182,7 @@ const styles = {
     filter: "blur(8px)",
   },
   panel: {
-    width: "min(840px, calc(100vw - 32px))",
+    width: "min(780px, calc(100vw - 32px))",
     maxHeight: "calc(100vh - 24px)",
     background: "#eadfbc",
     borderRadius: 0,
@@ -192,7 +198,7 @@ const styles = {
     borderBottom: "4px solid #33442f",
   },
   inner: {
-    padding: "clamp(18px, 3vw, 30px)",
+    padding: "clamp(18px, 2.8vw, 26px)",
     display: "flex",
     flexDirection: "column",
     gap: 0,
@@ -201,19 +207,11 @@ const styles = {
   },
   kickerRow: {
     display: "flex",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
     gap: 12,
     marginBottom: 12,
     flexWrap: "wrap",
-  },
-  kicker: {
-    fontFamily: '"Courier New", "Lucida Console", monospace',
-    fontSize: "clamp(11px, 1.2vw, 14px)",
-    fontWeight: 700,
-    letterSpacing: "0.12em",
-    textTransform: "uppercase",
-    color: "#506446",
   },
   stepChip: {
     padding: "6px 10px",
@@ -228,19 +226,6 @@ const styles = {
   },
   heroBlock: {
     marginBottom: 18,
-  },
-  heroBadge: {
-    display: "inline-block",
-    padding: "6px 10px",
-    marginBottom: 12,
-    background: "#d4ba7f",
-    color: "#573c1d",
-    fontFamily: '"Courier New", "Lucida Console", monospace',
-    fontSize: 11,
-    fontWeight: 800,
-    textTransform: "uppercase",
-    letterSpacing: "0.08em",
-    border: "2px solid #8e7344",
   },
   heading: {
     fontFamily: '"Courier New", "Lucida Console", monospace',
@@ -257,16 +242,7 @@ const styles = {
     lineHeight: 1.45,
     color: "#42523d",
     margin: 0,
-    maxWidth: 620,
-  },
-  subtleMeta: {
-    fontFamily: '"Courier New", "Lucida Console", monospace',
-    fontSize: 11,
-    lineHeight: 1.4,
-    color: "#7b6b4f",
-    margin: "10px 0 0",
-    textTransform: "uppercase",
-    letterSpacing: "0.08em",
+    maxWidth: 540,
   },
   form: {
     display: "flex",
@@ -275,7 +251,7 @@ const styles = {
   },
   detailsGrid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
     gap: 12,
   },
   questionCard: {
@@ -383,10 +359,10 @@ const styles = {
   footerRow: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "flex-end",
+    alignItems: "center",
     gap: 12,
     flexWrap: "wrap",
-    marginTop: 2,
+    marginTop: 8,
   },
   submitButton: {
     padding: "14px 24px",
@@ -407,6 +383,6 @@ const styles = {
     color: "#667057",
     lineHeight: 1.4,
     margin: 0,
-    maxWidth: 420,
+    maxWidth: 360,
   },
 };

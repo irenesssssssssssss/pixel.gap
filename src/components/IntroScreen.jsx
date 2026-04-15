@@ -91,7 +91,7 @@ function drawCloud(ctx) {
 export default function IntroScreen({ onStart }) {
   useEffect(() => {
     function handleKeyDown(e) {
-      if (e.key === "2" || e.key === "Enter" || e.key === " ") {
+      if (e.key === "2" || e.key === "Enter" || e.key === " " || e.key === "Tab") {
         e.preventDefault();
         onStart();
       }

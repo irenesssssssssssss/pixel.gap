@@ -294,7 +294,16 @@ export default function CouncilMeeting({ quest, onClose }) {
 
   function handleSubmit() { submitConversationText(textInput); }
   function handleKeyDown(e) {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(); }
+    const canSubmit = textInput.trim() && !isLoading && !isSpeaking;
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+      return;
+    }
+    if (e.key === "Tab" && !e.shiftKey && canSubmit) {
+      e.preventDefault();
+      handleSubmit();
+    }
   }
   function toggleMic() {
     if (!recognitionRef.current) return;

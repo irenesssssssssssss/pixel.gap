@@ -11,6 +11,7 @@ import ProfileScreen  from "./components/ProfileScreen";
 export default function App() {
   const [screen, setScreen] = useState("start");
   const game = useGameState();
+  const isDev = import.meta.env.DEV;
 
   if (screen === "start")   return <PrivacyScreen onConsent={() => setScreen("intro")} />;
   if (screen === "intro")   return <IntroScreen onStart={() => setScreen("profile")} />;
@@ -27,13 +28,24 @@ export default function App() {
 
   return (
     <div style={styles.page}>
-      <button
-        style={styles.skipBtn}
-        onClick={game.skipToDebate}
-        title="dev: skip to council debate"
-      >
-        ⏭ skip to debate
-      </button>
+      {isDev && (
+        <div style={styles.devTools}>
+          <button
+            style={styles.skipBtn}
+            onClick={game.skipToDelaware}
+            title="dev: skip to delaware office"
+          >
+            ⏭ skip to delaware
+          </button>
+          <button
+            style={styles.skipBtn}
+            onClick={game.skipToDebate}
+            title="dev: skip to council debate"
+          >
+            ⏭ skip to debate
+          </button>
+        </div>
+      )}
       <div style={styles.gameWrap}>
         <GameCanvas
           scene={game.scene}
@@ -80,11 +92,16 @@ const styles = {
     position: "relative",
     overflow: "hidden",
   },
-  skipBtn: {
+  devTools: {
     position: "fixed",
-    bottom: 12,
     right: 12,
+    bottom: 12,
     zIndex: 9999,
+    display: "flex",
+    flexDirection: "column",
+    gap: 8,
+  },
+  skipBtn: {
     padding: "6px 12px",
     background: "rgba(20,20,20,0.82)",
     border: "1px solid rgba(255,200,80,0.5)",

@@ -554,7 +554,7 @@ export function useGameState() {
 
   function enterOffice() {
     setScene("office");
-    setPlayer((prev) => ({ ...prev, x: 3, y: 14, dir: "right" }));
+    setPlayer((prev) => ({ ...prev, x: 2, y: 16, dir: "right" }));
     setQuest((prev) => {
       const next =
         prev.stage === QUEST_STAGES.GO_TO_OFFICE ? { ...prev, stage: QUEST_STAGES.OFFICE_PILLARS } : prev;
@@ -851,8 +851,29 @@ export function useGameState() {
 
   useEffect(() => () => window.clearTimeout(bannerTimeoutRef.current), []);
 
+  function skipToDelaware() {
+    dismissDialog();
+    setCouncilOpen(false);
+    setLearningHouseOpen(false);
+    setReportOpen(false);
+    setScene("office");
+    setPlayer((prev) => ({ ...prev, x: 2, y: 16, dir: "right" }));
+    setQuest((prev) =>
+      syncStatus({
+        ...prev,
+        stage: QUEST_STAGES.OFFICE_PILLARS,
+        visited: Array.from(new Set([...prev.visited, "olive", "frank", "otis"])),
+        pillarBeats: { ...prev.pillarBeats, frank: 1, otis: 1 },
+        pillarOrder: prev.pillarOrder || { town: ["frank", "otis"], office: ["suzy", "hazel"] },
+        openingPov: prev.openingPov || "conduct",
+      })
+    );
+  }
+
   function skipToDebate() {
     dismissDialog();
+    setLearningHouseOpen(false);
+    setReportOpen(false);
     setScene("town");
     setPlayer((prev) => ({ ...prev, x: 43, y: 12, dir: "up" }));
     setQuest((prev) =>
@@ -894,6 +915,7 @@ export function useGameState() {
     setPlayerProfile,
     councilOpen,
     closeCouncil,
+    skipToDelaware,
     skipToDebate,
     learningHouseOpen,
     openLearningHouse,

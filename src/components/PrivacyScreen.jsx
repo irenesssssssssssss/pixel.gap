@@ -129,7 +129,7 @@ function drawCursor(ctx) {
 export default function PrivacyScreen({ onConsent }) {
   useEffect(() => {
     function handleKeyDown(e) {
-      if (e.key === "2" || e.key === "Enter" || e.key === " ") {
+      if (e.key === "2" || e.key === "Enter" || e.key === " " || e.key === "Tab") {
         e.preventDefault();
         onConsent();
       }

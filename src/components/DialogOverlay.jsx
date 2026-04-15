@@ -33,23 +33,47 @@ export default function DialogOverlay({ dialog, onChoice, onAdvance, onSubmitRef
     }
   }, [dialog]);
 
-  if (!dialog) return null;
+  const phase        = dialog?.phase || null;
+  const isQuestion   = phase === "question";
+  const isReaction   = phase === "reaction";
+  const isReflection = phase === "reflection";
+  const isInfo       = phase === "info";
+  const bodyText     = isReaction ? dialog?.reaction : dialog?.message;
 
-  const isQuestion   = dialog.phase === "question";
-  const isReaction   = dialog.phase === "reaction";
-  const isReflection = dialog.phase === "reflection";
-  const isInfo       = dialog.phase === "info";
-  const bodyText     = isReaction ? dialog.reaction : dialog.message;
+  const accent   = dialog ? (NPC_ACCENT[dialog.npcId] || "#7ab068") : "#7ab068";
+  const segments = dialog && !isReflection && bodyText ? parseSpeechSegments(dialog, bodyText) : [];
+  const history  = dialog && !isReflection && dialog.history?.length > 0 ? dialog.history : [];
+  const hasPromptValues = dialog?.prompts?.every((p) => (values[p.id] || "").trim());
+  const canAdvanceWithShortcut =
+    isInfo ||
+    isReaction ||
+    (isQuestion && (!dialog?.choices || dialog.choices.length === 0));
 
-  const accent   = NPC_ACCENT[dialog.npcId] || "#7ab068";
-  const segments = !isReflection && bodyText ? parseSpeechSegments(dialog, bodyText) : [];
-  const history  = !isReflection && dialog.history?.length > 0 ? dialog.history : [];
+  useEffect(() => {
+    if (!dialog || !canAdvanceWithShortcut) return undefined;
+
+    function handleWindowKeyDown(event) {
+      const tag = document.activeElement?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      const isPrimaryShortcut =
+        (event.key === "Tab" && !event.shiftKey) ||
+        (event.key === "Enter" && !event.shiftKey);
+      if (!isPrimaryShortcut) return;
+      event.preventDefault();
+      onAdvance();
+    }
+
+    window.addEventListener("keydown", handleWindowKeyDown);
+    return () => window.removeEventListener("keydown", handleWindowKeyDown);
+  }, [canAdvanceWithShortcut, dialog, onAdvance]);
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (!dialog.prompts?.every((p) => (values[p.id] || "").trim())) return;
+    if (!hasPromptValues) return;
     onSubmitReflection(values);
   }
+
+  if (!dialog) return null;
 
   // ── Centered reflection form (legacy path) ────────────────────────────────
   if (isReflection) {
@@ -64,12 +88,22 @@ export default function DialogOverlay({ dialog, onChoice, onAdvance, onSubmitRef
             </div>
           </div>
           <form style={styles.form} onSubmit={handleSubmit}>
-            {dialog.prompts.map((prompt) => (
+            {dialog.prompts.map((prompt, index) => (
               <label key={prompt.id} style={styles.promptBlock}>
                 <span style={styles.promptText}>{prompt.prompt}</span>
                 <textarea
                   value={values[prompt.id] || ""}
                   onChange={(e) => setValues((prev) => ({ ...prev, [prompt.id]: e.target.value }))}
+                  onKeyDown={(event) => {
+                    const isLastPrompt = index === dialog.prompts.length - 1;
+                    const isPrimaryShortcut =
+                      (event.key === "Tab" && !event.shiftKey) ||
+                      (event.key === "Enter" && !event.shiftKey);
+                    if (isPrimaryShortcut && isLastPrompt && hasPromptValues) {
+                      event.preventDefault();
+                      handleSubmit(event);
+                    }
+                  }}
                   rows={3}
                   style={styles.textarea}
                 />
@@ -152,6 +186,15 @@ export default function DialogOverlay({ dialog, onChoice, onAdvance, onSubmitRef
                   placeholder="type your response here..."
                   value={openText}
                   onChange={(e) => setOpenText(e.target.value)}
+                  onKeyDown={(event) => {
+                    const isPrimaryShortcut =
+                      (event.key === "Tab" && !event.shiftKey) ||
+                      (event.key === "Enter" && !event.shiftKey);
+                    if (isPrimaryShortcut && openText.trim()) {
+                      event.preventDefault();
+                      onChoice({ ...openChoice, label: openText.trim() });
+                    }
+                  }}
                   rows={3}
                   autoFocus
                 />

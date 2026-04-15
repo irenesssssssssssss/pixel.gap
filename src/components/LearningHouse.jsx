@@ -58,6 +58,18 @@ export default function LearningHouse({ quest, onClose }) {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       handleSend();
+      return;
+    }
+    if (event.key === "Tab" && !event.shiftKey && draft.trim() && !busy) {
+      event.preventDefault();
+      handleSend();
+    }
+  }
+
+  function handleAnonymousNoteKeyDown(event) {
+    if (event.key === "Tab" && !event.shiftKey && anonymousNote.trim()) {
+      event.preventDefault();
+      saveAnonymousDraft();
     }
   }
 
@@ -173,9 +185,9 @@ export default function LearningHouse({ quest, onClose }) {
               <textarea
                 value={anonymousNote}
                 onChange={(event) => setAnonymousNote(event.target.value)}
+                onKeyDown={handleAnonymousNoteKeyDown}
                 placeholder="share anything that has been bothering you, or draft feedback you wish leadership could hear..."
                 style={styles.noteTextarea}
-                rows={8}
               />
               <div style={styles.noteActions}>
                 <button
@@ -303,7 +315,7 @@ const styles = {
   },
   noteLayout: {
     display: "grid",
-    gridTemplateColumns: "minmax(0, 1.5fr) minmax(240px, 0.9fr)",
+    gridTemplateColumns: "minmax(0, 1.6fr) minmax(240px, 0.9fr)",
     gap: 16,
     minHeight: 0,
     flex: 1,
@@ -362,6 +374,7 @@ const styles = {
   },
   textarea: {
     width: "100%",
+    boxSizing: "border-box",
     resize: "none",
     borderRadius: 14,
     border: "3px solid #d7c79e",
@@ -373,7 +386,8 @@ const styles = {
   },
   noteTextarea: {
     width: "100%",
-    resize: "vertical",
+    boxSizing: "border-box",
+    resize: "none",
     borderRadius: 14,
     border: "3px solid #d7c79e",
     padding: "12px 14px",
@@ -381,7 +395,7 @@ const styles = {
     background: "#fffdf7",
     color: "#3b3a2f",
     outline: "none",
-    minHeight: 170,
+    minHeight: 200,
   },
   sendButton: {
     border: "3px solid #35532b",
@@ -423,12 +437,13 @@ const styles = {
     fontSize: 14,
   },
   noteCard: {
+    display: "flex",
+    flexDirection: "column",
     borderRadius: 18,
     padding: 16,
     background: "#fffaf0",
     border: "3px solid #cfbf93",
-    display: "flex",
-    flexDirection: "column",
+    boxShadow: "inset 0 2px 0 rgba(255,255,255,0.7)",
     gap: 12,
   },
   noteCopy: {

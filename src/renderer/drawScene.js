@@ -29,7 +29,7 @@ import {
   drawBillboard, drawFence, drawSign, drawBench, drawBarrel, drawCrate, drawLamp,
   drawCanalPost, drawBridge, drawRock, drawFlower, drawCropBed, drawTree,
   drawHazardCone, drawWasteBin, drawWaterMarker, drawNoticeboard, drawWatchPost, drawMachine,
-  drawCouncilTable, drawChair,
+  drawCouncilTable, drawChair, drawPixelText,
 } from "./props";
 import { drawBuilding, drawStatue } from "./buildings";
 import { drawDesk, drawCounter, drawPlant, drawOfficeDecor } from "./furniture";
@@ -82,21 +82,13 @@ export function drawScene(ctx, {
     rect(ctx, sx + 5, sy + 6,  6, 1, "#9cf07a");
     rect(ctx, sx + 6, sy + 8,  4, 1, "#9cf07a");
 
-    // "EXIT" label — hard pixel outline, no blur
-    ctx.save();
-    ctx.font = "bold 7px 'Courier New', monospace";
-    ctx.textAlign = "center";
-    ctx.shadowBlur = 0;
-    // 1px hard outline in all four directions
-    ctx.fillStyle = "#000000";
-    ctx.fillText("EXIT", sx + 9, sy - 3);
-    ctx.fillText("EXIT", sx + 7, sy - 3);
-    ctx.fillText("EXIT", sx + 8, sy - 2);
-    ctx.fillText("EXIT", sx + 8, sy - 4);
-    // Main text on top
-    ctx.fillStyle = "#e8ffdc";
-    ctx.fillText("EXIT", sx + 8, sy - 3);
-    ctx.restore();
+    // Pixel sign plate so the label reads clearly against indoor floors
+    rect(ctx, sx - 1, sy - 10, 18, 7, "rgba(0,0,0,0.5)");
+    rect(ctx, sx,     sy - 11, 18, 7, "#27452c");
+    rect(ctx, sx,     sy - 11, 18, 1, "#5f9563");
+    rect(ctx, sx,     sy - 5,  18, 1, "#16261a");
+    rect(ctx, sx + 1, sy - 10, 16, 5, "#395d3d");
+    drawPixelText(ctx, "EXIT", sx + 2, sy - 9, "#eef8d8", 1);
   }
 
   if (scene === "office")   drawExitMarker(OFFICE_EXIT_TILE.x,    OFFICE_EXIT_TILE.y);
