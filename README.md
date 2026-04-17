@@ -55,3 +55,50 @@ The app now logs:
 - `council_message` for every player and council turn in the debate
 
 Each row includes a persistent `userId` plus a per-session `sessionId`. A starter Apps Script receiver is included at [docs/google-apps-script.gs](/Users/majaarament/Desktop/pixel.gaps/docs/google-apps-script.gs).
+
+Vercel + OpenAI setup
+
+1. Push this repo to GitHub and import it into Vercel as a Vite project.
+2. In Vercel, add these environment variables:
+   - `OPENAI_API_KEY`
+   - `SHEETS_ENDPOINT` (optional, only if you want Google Sheets logging)
+3. Deploy. Vercel will serve the React app and the serverless files in `api/`.
+
+React connection
+
+You do not need to put the OpenAI key in React.
+
+The app already calls same-origin API routes:
+
+- `src/engine/councilAI.js` -> `POST /api/council-ai`
+- `src/engine/esgGuideAI.js` -> `POST /api/esg-guide`
+- `src/engine/logger.js` -> `POST /api/log-event`
+
+That means React should always call `fetch("/api/...")`, and the serverless function should call OpenAI using `process.env.OPENAI_API_KEY`.
+
+If you want a simple test button, you can call the generic route in `api/chat.js` like this:
+
+```js
+async function askAI(prompt) {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ prompt }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Request failed");
+  }
+
+  return data.text;
+}
+```
+
+Local development
+
+- `npm run dev` starts the local Node API server on `http://localhost:8787`
+- Vite proxies `/api/*` to that server during development
+- On Vercel, those same `/api/*` calls are handled by the files in `api/`
